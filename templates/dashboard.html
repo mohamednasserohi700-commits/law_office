@@ -1,0 +1,92 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="mb-6 hero-header glass-panel card-base p-5">
+  <div class="flex flex-wrap items-center justify-between gap-3">
+    <div>
+      <h1 class="text-2xl font-extrabold text-white">مرحبًا بك، {{ session.get("tenant_name", "شركتك القانونية") }}</h1>
+      <p class="mt-1 text-sm font-medium text-slate-300">لوحة SaaS ذكية لإدارة العمل القانوني مع عزل كامل لبيانات الشركة.</p>
+    </div>
+    <div class="flex items-center gap-2 z-10">
+      <a class="btn-secondary px-4 py-2 text-sm font-semibold" href="{{ url_for('table_create', table='cases') }}">إضافة قضية</a>
+      <a class="btn-primary px-4 py-2 text-sm font-semibold" href="{{ url_for('table_create', table='clients') }}">إضافة عميل</a>
+    </div>
+  </div>
+</section>
+
+<section class="mb-8 grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-5">
+  <article class="metric-card card-base glass-panel p-4">
+    <div class="mb-3 flex items-center justify-between"><span class="text-xs font-bold text-slate-300">إجمالي القضايا</span><span>⚖️</span></div>
+    <p class="text-3xl font-extrabold text-white pulse-metric" data-counter="{{ stats.cases }}">0</p>
+    <div class="mt-3 flex items-center justify-between text-xs"><span class="text-slate-300">قاعدة قضايا المكتب بالكامل</span><span class="text-emerald-300">↑ 12%</span></div>
+  </article>
+  <article class="metric-card card-base glass-panel p-4">
+    <div class="mb-3 flex items-center justify-between"><span class="text-xs font-bold text-slate-300">القضايا النشطة</span><span>🟢</span></div>
+    <p class="text-3xl font-extrabold text-white" data-counter="{{ stats.tasks_pending }}">0</p>
+    <div class="mt-3 flex items-center justify-between text-xs"><span class="text-slate-300">القضايا التي تتطلب متابعة فورية</span><span class="text-amber-300">↔ مستقر</span></div>
+  </article>
+  <article class="metric-card card-base glass-panel p-4">
+    <div class="mb-3 flex items-center justify-between"><span class="text-xs font-bold text-slate-300">جلسات اليوم</span><span>📆</span></div>
+    <p class="text-3xl font-extrabold text-white" data-counter="{{ stats.sessions }}">0</p>
+    <div class="mt-3 flex items-center justify-between text-xs"><span class="text-slate-300">الأجندة اليومية</span><span class="text-emerald-300">↑ 5%</span></div>
+  </article>
+  <article class="metric-card card-base glass-panel p-4">
+    <div class="mb-3 flex items-center justify-between"><span class="text-xs font-bold text-slate-300">المدفوعات اليوم</span><span>💳</span></div>
+    <p class="text-3xl font-extrabold text-white" data-counter="{{ stats.income|int }}">0</p>
+    <div class="mt-3 flex items-center justify-between text-xs"><span class="text-slate-300">إجمالي الإيرادات المسجلة</span><span class="text-emerald-300">↑ نمو</span></div>
+  </article>
+  <article class="metric-card card-base glass-panel p-4">
+    <div class="mb-3 flex items-center justify-between"><span class="text-xs font-bold text-slate-300">المهام المتأخرة</span><span>⏳</span></div>
+    <p class="text-3xl font-extrabold text-white" data-counter="{{ stats.tasks_pending }}">0</p>
+    <div class="mt-3 flex items-center justify-between text-xs"><span class="text-slate-300">مهام غير منجزة حتى الآن</span><span class="text-rose-300">↓ تحتاج متابعة</span></div>
+  </article>
+</section>
+
+<section class="grid grid-cols-1 gap-4 xl:grid-cols-12">
+  <article class="card-base glass-panel p-4 xl:col-span-8">
+    <div class="mb-3 flex items-center justify-between"><h2 class="text-sm font-bold text-slate-100">القضايا النشطة</h2><a href="{{ url_for('table_list', table='cases') }}" class="btn-soft px-3 py-1 text-xs font-semibold">عرض الكل</a></div>
+    <div class="space-y-2">
+      {% for c in urgent_cases %}
+      <div class="flex items-center justify-between rounded-xl border border-white/10 bg-white/5 px-3 py-2">
+        <span class="text-sm font-semibold text-slate-100">{{ c["case_num"] }} - {{ c["subject"] }}</span>
+        <span data-status class="rounded-full border px-2 py-0.5 text-[11px]">{{ c["status"] or "نشطة" }}</span>
+      </div>
+      {% endfor %}
+      {% if not urgent_cases %}
+      <div class="rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm text-slate-300">لا توجد قضايا نشطة حاليًا.</div>
+      {% endif %}
+    </div>
+  </article>
+  <article class="card-base glass-panel p-4 xl:col-span-8">
+    <div class="mb-3 flex items-center justify-between"><h2 class="text-sm font-bold text-slate-100">الجلسات القادمة</h2><a href="{{ url_for('table_list', table='sessions') }}" class="btn-soft px-3 py-1 text-xs font-semibold">إدارة</a></div>
+    <ul class="space-y-2">
+      {% for s in upcoming_sessions %}
+      <li class="flex items-center justify-between rounded-xl border border-white/10 bg-white/5 px-3 py-2 transition-all duration-200 hover:bg-white/10">
+        <span class="text-sm font-semibold text-slate-100">{{ s["case_num"] or "قضية" }} - {{ s["subject"] or "-" }}</span>
+        <span class="text-xs text-slate-300">{{ s["session_date"] }} {{ s["session_time"] or "" }}</span>
+      </li>
+      {% endfor %}
+      {% if not upcoming_sessions %}
+      <li class="rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm text-slate-300">لا توجد جلسات قادمة.</li>
+      {% endif %}
+    </ul>
+  </article>
+  <article class="card-base glass-panel p-4 xl:col-span-4">
+    <div class="mb-3 flex items-center justify-between"><h2 class="text-sm font-bold text-slate-100">رؤى و تنبيهات</h2><span class="text-xs text-slate-300">AI + Alerts</span></div>
+    <div class="space-y-2">
+      <div class="rounded-xl border border-[#C9A54C]/40 bg-[#C9A54C]/10 p-3">
+        <p class="text-sm font-semibold text-[#F4DEAC]">نسبة إنجاز المهام: {{ insight.tasks_completion }}%</p>
+        <p class="mt-1 text-xs text-slate-300">مستوى أداء الفريق الحالي.</p>
+      </div>
+      <div class="rounded-xl border border-[#2EC4B6]/35 bg-[#2EC4B6]/10 p-3">
+        <p class="text-sm font-semibold text-[#B0F4EE]">ضغط القضايا: {{ insight.case_pressure }}</p>
+        <p class="mt-1 text-xs text-slate-300">توزيع متطلبات القضايا مقارنة بالقدرة التشغيلية.</p>
+      </div>
+      <div class="rounded-xl border border-[#7C5CFF]/35 bg-[#7C5CFF]/10 p-3">
+        <p class="text-sm font-semibold text-[#D4C8FF]">الأداء المالي: {{ insight.net_balance }}</p>
+        <p class="mt-1 text-xs text-slate-300">صافي التدفقات بعد المصروفات.</p>
+      </div>
+    </div>
+  </article>
+</section>
+
+{% endblock %}

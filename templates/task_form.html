@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="smart-form-page">
+  <header class="smart-form-hero card-base glass-panel">
+    <div class="smart-form-hero-text">
+      <p class="smart-form-kicker">✅ المهام</p>
+      <h1 class="text-2xl font-extrabold text-white">{{ "تعديل مهمة" if row else "إضافة مهمة" }}</h1>
+      <p class="mt-1 text-sm text-slate-300">المهام المفتوحة تظهر في مركز التنبيهات تلقائياً.</p>
+    </div>
+    <a class="btn-secondary px-4 py-2 text-sm font-semibold" href="{{ url_for('table_list', table='tasks') }}">← المهام</a>
+  </header>
+
+  <form method="post" class="smart-form card-base glass-panel" data-smart-form="task" novalidate>
+    <section class="smart-form-section">
+      <h2 class="smart-form-section-title"><span>1</span> تفاصيل المهمة</h2>
+      <div class="smart-form-grid">
+        <div class="smart-field smart-field-span-2">
+          <label class="smart-label" for="title">عنوان المهمة <span class="smart-req">*</span></label>
+          <input class="input-base" id="title" name="title" required value="{{ row['title'] if row else '' }}">
+        </div>
+        <div class="smart-field">
+          <label class="smart-label" for="related">مرتبط بـ</label>
+          <input class="input-base" id="related" name="related" value="{{ row['related'] if row else '' }}" placeholder="قضية / عميل / جلسة">
+        </div>
+        <div class="smart-field">
+          <label class="smart-label" for="priority">الأولوية</label>
+          <select class="input-base" id="priority" name="priority">
+            {% for opt in task_priorities %}
+            <option value="{{ opt }}" {% if row and row['priority'] == opt %}selected{% elif not row and opt == 'عادية' %}selected{% endif %}>{{ opt }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="smart-field">
+          <label class="smart-label" for="due_date">تاريخ الاستحقاق</label>
+          <input class="input-base" id="due_date" name="due_date" type="date" value="{{ row['due_date'] if row else '' }}">
+        </div>
+        <div class="smart-field">
+          <label class="smart-label" for="assigned_to">مسند إلى</label>
+          <input class="input-base" id="assigned_to" name="assigned_to" value="{{ row['assigned_to'] if row else session.get('username', '') }}">
+        </div>
+        <div class="smart-field">
+          <label class="smart-label" for="status">الحالة</label>
+          <select class="input-base" id="status" name="status">
+            {% for val, lbl in task_statuses %}
+            <option value="{{ val }}" {% if row and row['status'] == val %}selected{% elif not row and val == 'open' %}selected{% endif %}>{{ lbl }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="smart-field smart-field-span-2">
+          <label class="smart-label" for="description">الوصف</label>
+          <textarea class="input-base smart-textarea" id="description" name="description" rows="3">{{ row['description'] if row else '' }}</textarea>
+        </div>
+      </div>
+    </section>
+    <footer class="smart-form-actions">
+      <button type="submit" class="btn-primary px-6 py-2.5 text-sm font-semibold">حفظ المهمة</button>
+      <a class="btn-secondary px-6 py-2.5 text-sm font-semibold" href="{{ url_for('table_list', table='tasks') }}">إلغاء</a>
+    </footer>
+  </form>
+</section>
+{% endblock %}

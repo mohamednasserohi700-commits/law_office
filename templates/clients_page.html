@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="mb-6 card-base glass-panel p-4">
+  <div class="flex flex-wrap items-center justify-between gap-3">
+    <div>
+      <h1 class="text-2xl font-extrabold text-white">إدارة العملاء</h1>
+      <p class="mt-1 text-sm text-slate-300">ملفات العملاء، سجل التواصل، وربط القضايا والمستندات.</p>
+    </div>
+    <div class="flex gap-2">
+      <form method="get">
+        <input class="input-base w-64" name="q" value="{{ q or '' }}" placeholder="بحث بالاسم أو الهاتف..." />
+      </form>
+      <a href="{{ url_for('table_create', table='clients') }}" class="btn-primary px-4 py-2 text-sm">عميل جديد</a>
+    </div>
+  </div>
+</section>
+
+<section class="card-base glass-panel table-wrap p-3">
+  <div class="overflow-x-auto max-h-[65vh]">
+    <table class="table-premium">
+      <thead>
+        <tr class="border-b border-white/15 text-xs text-slate-300">
+          <th class="px-3 py-3">#</th>
+          <th class="px-3 py-3">الاسم</th>
+          <th class="px-3 py-3">النوع</th>
+          <th class="px-3 py-3">الهاتف</th>
+          <th class="px-3 py-3">البريد</th>
+          <th class="px-3 py-3">الحالة</th>
+          <th class="px-3 py-3">إجراءات</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for row in rows %}
+        <tr class="text-slate-100">
+          <td class="px-3 py-3 text-slate-300">{{ row["id"] }}</td>
+          <td class="px-3 py-3 font-semibold">{{ row["name"] }}</td>
+          <td class="px-3 py-3">{{ row["type"] }}</td>
+          <td class="px-3 py-3">{{ row["phone"] }}</td>
+          <td class="px-3 py-3">{{ row["email"] }}</td>
+          <td class="px-3 py-3">
+            <span class="rounded-full border px-2 py-0.5 text-[11px] {% if row['active'] %}border-emerald-300/30 bg-emerald-500/15 text-emerald-100{% else %}border-slate-300/30 bg-slate-500/20 text-slate-200{% endif %}">
+              {{ "نشط" if row["active"] else "موقوف" }}
+            </span>
+          </td>
+          <td class="px-3 py-3">
+            <div class="flex gap-2">
+              <a class="btn-secondary px-3 py-1 text-xs" href="{{ url_for('table_edit', table='clients', row_id=row['id']) }}">تعديل</a>
+              <form method="post" action="{{ url_for('table_delete', table='clients', row_id=row['id']) }}" onsubmit="return confirm('تأكيد حذف العميل؟')">
+                <button class="btn-danger px-3 py-1 text-xs">حذف</button>
+              </form>
+            </div>
+          </td>
+        </tr>
+        {% else %}
+        <tr><td colspan="7" class="px-3 py-8 text-center text-slate-300">لا توجد بيانات عملاء.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+{% endblock %}

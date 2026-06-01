@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="mb-6 card-base glass-panel p-4">
+  <div class="flex flex-wrap items-center justify-between gap-3">
+    <div>
+      <h1 class="text-2xl font-extrabold text-white">إدارة المستخدمين</h1>
+      <p class="mt-1 text-sm text-slate-300">تحديد الدور (ادمن/محامي/مساعد) والصلاحيات اليدوية.</p>
+    </div>
+    <div class="flex gap-2">
+      <form method="get">
+        <input class="input-base w-64" name="q" value="{{ q or '' }}" placeholder="بحث باسم المستخدم..." />
+      </form>
+      <a href="{{ url_for('table_create', table='users') }}" class="btn-primary px-4 py-2 text-sm">مستخدم جديد</a>
+    </div>
+  </div>
+</section>
+<section class="card-base glass-panel table-wrap p-3">
+  <div class="overflow-x-auto max-h-[65vh]">
+    <table class="table-premium">
+      <thead>
+        <tr class="text-xs text-slate-300">
+          <th class="px-3 py-3">#</th>
+          <th class="px-3 py-3">الاسم</th>
+          <th class="px-3 py-3">اسم المستخدم</th>
+          <th class="px-3 py-3">الدور</th>
+          <th class="px-3 py-3">الصلاحيات</th>
+          <th class="px-3 py-3">الحالة</th>
+          <th class="px-3 py-3">إجراءات</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for row in rows %}
+        <tr class="text-slate-100">
+          <td class="px-3 py-3">{{ row["id"] }}</td>
+          <td class="px-3 py-3 font-semibold">{{ row["name"] }}</td>
+          <td class="px-3 py-3">{{ row["username"] }}</td>
+          <td class="px-3 py-3">{{ "ادمن" if row["role"] == "admin" else ("محامي" if row["role"] == "lawyer" else "مساعد") }}</td>
+          <td class="px-3 py-3 text-xs text-slate-300">{{ row["permissions"] or "[]" }}</td>
+          <td class="px-3 py-3">{{ "نشط" if row["active"] else "موقوف" }}</td>
+          <td class="px-3 py-3">
+            <div class="flex gap-2">
+              <a class="btn-secondary px-3 py-1 text-xs" href="{{ url_for('table_edit', table='users', row_id=row['id']) }}">تعديل</a>
+              <form method="post" action="{{ url_for('table_delete', table='users', row_id=row['id']) }}" onsubmit="return confirm('تأكيد الحذف؟')">
+                <button class="btn-danger px-3 py-1 text-xs">حذف</button>
+              </form>
+            </div>
+          </td>
+        </tr>
+        {% else %}
+        <tr><td colspan="7" class="px-3 py-8 text-center text-slate-300">لا توجد بيانات.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+{% endblock %}

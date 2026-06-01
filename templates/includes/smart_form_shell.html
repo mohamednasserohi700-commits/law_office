@@ -1,0 +1,12 @@
+{# متغيرات: icon, kicker, title, subtitle, back_url, back_label #}
+<section class="smart-form-page">
+  <header class="smart-form-hero card-base glass-panel">
+    <div class="smart-form-hero-text">
+      <p class="smart-form-kicker">{{ icon }} {{ kicker }}</p>
+      <h1 class="text-2xl font-extrabold text-white">{{ title }}</h1>
+      <p class="mt-1 text-sm text-slate-300">{{ subtitle }}</p>
+    </div>
+    <a class="btn-secondary px-4 py-2 text-sm font-semibold" href="{{ back_url }}">← {{ back_label }}</a>
+  </header>
+  {{ caller() }}
+</section>

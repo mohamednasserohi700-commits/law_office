@@ -1,0 +1,26 @@
+{# متغيرات: required (bool), selected_case (dict|None), hint_extra (str optional) #}
+<div class="smart-picker" data-case-picker
+     data-initial-id="{{ selected_case['id'] if selected_case else '' }}"
+     data-initial-num="{{ (selected_case['case_num'] if selected_case else '')|e }}"
+     data-initial-subject="{{ (selected_case['subject'] if selected_case else '')|e }}"
+     data-initial-status="{{ (selected_case['status'] if selected_case else '')|e }}">
+  <input type="hidden" name="case_id" value="{{ selected_case['id'] if selected_case else '' }}" {% if required %}required{% endif %}>
+  <div class="smart-picker-search-wrap">
+    <span class="smart-picker-icon">⚖️</span>
+    <input type="text" class="input-base smart-picker-search" placeholder="ابحث برقم القضية أو الموضوع..." autocomplete="off">
+  </div>
+  <div class="smart-picker-selected hidden">
+    <div class="smart-picker-chip smart-picker-chip-case">
+      <div class="smart-picker-chip-main">
+        <span class="smart-picker-chip-name"></span>
+        <span class="smart-picker-chip-meta"></span>
+      </div>
+      <button type="button" class="smart-picker-clear" aria-label="إزالة القضية">✕</button>
+    </div>
+  </div>
+  <div class="smart-picker-dropdown hidden" role="listbox"></div>
+  <p class="smart-picker-hint">
+    <a href="{{ url_for('table_create', table='cases') }}" class="smart-link">+ قضية جديدة</a>
+    {{ hint_extra or '' }}
+  </p>
+</div>

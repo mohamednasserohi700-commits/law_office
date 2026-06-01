@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="mb-6 hero-header glass-panel card-base p-5">
+  <div class="flex items-center justify-between gap-3">
+    <div>
+      <h1 class="text-2xl font-extrabold text-white">الفوترة والاشتراك</h1>
+      <p class="mt-1 text-sm text-slate-300">إدارة الفواتير، تتبع المدفوعات، ومراقبة خطة الاشتراك.</p>
+    </div>
+    <span class="status-pill status-active">الخطة الحالية: {{ session.get("tenant_plan", "Basic") }}</span>
+  </div>
+</section>
+
+<section class="grid grid-cols-1 gap-4 xl:grid-cols-2">
+  <article class="card-base glass-panel p-4">
+    <h2 class="mb-3 text-sm font-bold text-slate-100">الفواتير</h2>
+    <div class="overflow-x-auto">
+      <table class="table-premium min-w-[700px]">
+        <thead>
+          <tr>
+            <th>رقم الفاتورة</th><th>المبلغ</th><th>الحالة</th><th>الاستحقاق</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for inv in invoices %}
+          <tr>
+            <td>{{ inv["invoice_no"] }}</td>
+            <td>{{ inv["amount"] }}</td>
+            <td><span data-status>{{ inv["status"] }}</span></td>
+            <td>{{ inv["due_date"] or "-" }}</td>
+          </tr>
+          {% else %}
+          <tr><td colspan="4" class="text-center text-slate-300">لا توجد فواتير حالية.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </article>
+
+  <article class="card-base glass-panel p-4">
+    <h2 class="mb-3 text-sm font-bold text-slate-100">سجل المدفوعات</h2>
+    <div class="overflow-x-auto">
+      <table class="table-premium min-w-[700px]">
+        <thead>
+          <tr>
+            <th>الفاتورة</th><th>المبلغ</th><th>الطريقة</th><th>التاريخ</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for p in payments %}
+          <tr>
+            <td>#{{ p["invoice_id"] or "-" }}</td>
+            <td>{{ p["amount"] }}</td>
+            <td>{{ p["method"] }}</td>
+            <td>{{ p["pay_date"] or p["created_at"] }}</td>
+          </tr>
+          {% else %}
+          <tr><td colspan="4" class="text-center text-slate-300">لا توجد عمليات دفع.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </article>
+</section>
+{% endblock %}

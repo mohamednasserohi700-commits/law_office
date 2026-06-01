@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="card-base glass-panel p-6">
+  <div>
+    <h1 class="text-2xl font-extrabold text-white">{{ "تعديل" if row else "إضافة" }} - {{ cfg.title }}</h1>
+    <p class="mt-1 text-sm font-medium text-slate-300">قم بتعبئة الحقول التالية بشكل دقيق ومنظّم.</p>
+    <form method="post">
+      <div class="mt-6 grid grid-cols-1 gap-4 md:grid-cols-2">
+        {% for f in cfg.fields %}
+        <div>
+          <label class="mb-2 block text-sm font-semibold text-slate-200">{{ field_labels.get(f, f) }}</label>
+          <input class="input-base" name="{{ f }}" value="{{ row[f] if row else '' }}">
+        </div>
+        {% endfor %}
+        {% if table == "users" %}
+        <div>
+          <label class="mb-2 block text-sm font-semibold text-slate-200">كلمة المرور {% if row %}(اتركها فارغة للإبقاء على الحالية){% endif %}</label>
+          <input class="input-base" type="password" name="password">
+        </div>
+        {% endif %}
+      </div>
+      <footer class="smart-form-actions mt-8">
+        <button type="submit" class="btn-primary px-6 py-2.5 text-sm font-semibold">حفظ</button>
+        <a class="btn-secondary px-6 py-2.5 text-sm font-semibold" href="{{ url_for('table_list', table=table) }}">إلغاء</a>
+      </footer>
+    </form>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,26 @@
+{# متغيرات: required (bool), selected_client (dict|None), hint_extra (str optional) #}
+<div class="smart-picker" data-client-picker
+     data-initial-id="{{ selected_client['id'] if selected_client else '' }}"
+     data-initial-name="{{ (selected_client['name'] if selected_client else '')|e }}"
+     data-initial-phone="{{ (selected_client['phone'] if selected_client else '')|e }}"
+     data-initial-type="{{ (selected_client['type'] if selected_client else '')|e }}">
+  <input type="hidden" name="client_id" value="{{ selected_client['id'] if selected_client else '' }}" {% if required %}required{% endif %}>
+  <div class="smart-picker-search-wrap">
+    <span class="smart-picker-icon">🔍</span>
+    <input type="text" class="input-base smart-picker-search" placeholder="ابحث عن عميل بالاسم أو الهاتف..." autocomplete="off">
+  </div>
+  <div class="smart-picker-selected hidden">
+    <div class="smart-picker-chip smart-picker-chip-client">
+      <div class="smart-picker-chip-main">
+        <span class="smart-picker-chip-name"></span>
+        <span class="smart-picker-chip-meta"></span>
+      </div>
+      <button type="button" class="smart-picker-clear" aria-label="إزالة العميل">✕</button>
+    </div>
+  </div>
+  <div class="smart-picker-dropdown hidden" role="listbox"></div>
+  <p class="smart-picker-hint">
+    <a href="{{ url_for('table_create', table='clients') }}" class="smart-link">+ عميل جديد</a>
+    {{ hint_extra or '' }}
+  </p>
+</div>

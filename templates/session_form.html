@@ -1,0 +1,82 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="smart-form-page">
+  <header class="smart-form-hero card-base glass-panel">
+    <div class="smart-form-hero-text">
+      <p class="smart-form-kicker">📆 جلسات المحكمة</p>
+      <h1 class="text-2xl font-extrabold text-white">{{ "تعديل جلسة" if row else "إضافة جلسة" }}</h1>
+      <p class="mt-1 text-sm text-slate-300">اربط الجلسة بقضية مسجّلة — ستظهر في التنبيهات واللوحة تلقائياً.</p>
+    </div>
+    <a class="btn-secondary px-4 py-2 text-sm font-semibold" href="{{ url_for('table_list', table='sessions') }}">← الجلسات</a>
+  </header>
+
+  {% if link_case %}
+  <div class="smart-connect-banner card-base glass-panel">
+    <span>🔗</span>
+    <span>مرتبطة بالقضية <strong>{{ link_case['case_num'] }}</strong> — {{ link_case['subject'] }}</span>
+    <a href="{{ url_for('table_edit', table='cases', row_id=link_case['id']) }}" class="smart-link">فتح القضية</a>
+  </div>
+  {% endif %}
+
+  <form method="post" class="smart-form card-base glass-panel" data-smart-form="session" novalidate>
+    <section class="smart-form-section">
+      <h2 class="smart-form-section-title"><span>1</span> ربط القضية والموعد</h2>
+      <div class="smart-form-grid">
+        <div class="smart-field smart-field-span-2">
+          <label class="smart-label">القضية <span class="smart-req">*</span></label>
+          {% with required=true, selected_case=selected_case, hint_extra='' %}
+          {% include "includes/picker_case.html" %}
+          {% endwith %}
+        </div>
+        <div class="smart-field">
+          <label class="smart-label" for="session_date">تاريخ الجلسة <span class="smart-req">*</span></label>
+          <input class="input-base" id="session_date" name="session_date" type="date" required value="{{ row['session_date'] if row else '' }}">
+        </div>
+        <div class="smart-field">
+          <label class="smart-label" for="session_time">وقت الجلسة</label>
+          <input class="input-base" id="session_time" name="session_time" type="time" value="{{ row['session_time'] if row else '' }}">
+        </div>
+      </div>
+    </section>
+
+    <section class="smart-form-section">
+      <h2 class="smart-form-section-title"><span>2</span> المحكمة والنتيجة</h2>
+      <div class="smart-form-grid">
+        <div class="smart-field">
+          <label class="smart-label" for="court">المحكمة</label>
+          <input class="input-base" id="court" name="court" value="{{ row['court'] if row else '' }}">
+        </div>
+        <div class="smart-field">
+          <label class="smart-label" for="room">القاعة</label>
+          <input class="input-base" id="room" name="room" value="{{ row['room'] if row else '' }}">
+        </div>
+        <div class="smart-field">
+          <label class="smart-label" for="result">نتيجة الجلسة</label>
+          <select class="input-base" id="result" name="result">
+            <option value="">— لم تُحدد بعد —</option>
+            {% for opt in session_results %}
+            <option value="{{ opt }}" {% if row and row['result'] == opt %}selected{% endif %}>{{ opt }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="smart-field">
+          <label class="smart-label" for="next_date">موعد الجلسة القادمة</label>
+          <input class="input-base" id="next_date" name="next_date" type="date" value="{{ row['next_date'] if row else '' }}">
+        </div>
+        <div class="smart-field smart-field-span-2">
+          <label class="smart-label" for="notes">ملاحظات</label>
+          <textarea class="input-base smart-textarea" id="notes" name="notes" rows="3">{{ row['notes'] if row else '' }}</textarea>
+        </div>
+      </div>
+    </section>
+
+    <footer class="smart-form-actions">
+      <button type="submit" class="btn-primary px-6 py-2.5 text-sm font-semibold">حفظ الجلسة</button>
+      <a class="btn-secondary px-6 py-2.5 text-sm font-semibold" href="{{ url_for('table_list', table='sessions') }}">إلغاء</a>
+    </footer>
+  </form>
+</section>
+{% endblock %}
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/smart-forms.js') }}" defer></script>
+{% endblock %}

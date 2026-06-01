@@ -1,0 +1,74 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="mb-6 card-base glass-panel p-4">
+  <div class="flex flex-wrap items-center justify-between gap-3">
+    <div>
+      <h1 class="text-2xl font-extrabold text-white">{{ module_icon }} {{ cfg.title }}</h1>
+      <p class="mt-1 text-sm text-slate-300">{{ list_subtitle }}</p>
+    </div>
+    <div class="flex flex-wrap gap-2">
+      <form method="get" class="flex gap-2">
+        <input class="input-base w-64" name="q" value="{{ q or '' }}" placeholder="بحث سريع..." />
+        <button type="submit" class="btn-secondary px-3 py-2 text-sm">بحث</button>
+      </form>
+      <a href="{{ url_for('table_create', table=table) }}" class="btn-primary px-4 py-2 text-sm font-semibold">إضافة جديد</a>
+    </div>
+  </div>
+</section>
+
+<section class="card-base glass-panel table-wrap p-3">
+  <div class="overflow-x-auto max-h-[65vh]">
+    <table class="table-premium">
+      <thead>
+        <tr class="border-b border-white/15 text-xs text-slate-300">
+          <th class="px-3 py-3">#</th>
+          {% for key, label in list_columns %}
+          <th class="px-3 py-3">{{ label }}</th>
+          {% endfor %}
+          <th class="px-3 py-3">إجراءات</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for row in rows %}
+        <tr class="text-slate-100">
+          <td class="px-3 py-3 text-slate-300">{{ row["id"] }}</td>
+          {% for key, label in list_columns %}
+          <td class="px-3 py-3">
+            {% if key == "case_num" and row['linked_case_id'] %}
+            <a class="smart-link" href="{{ url_for('table_edit', table='cases', row_id=row['linked_case_id']) }}">{{ row[key] or "—" }}</a>
+            {% elif key == "client_name" and row['linked_client_id'] %}
+            <a class="smart-link" href="{{ url_for('table_edit', table='clients', row_id=row['linked_client_id']) }}">{{ row[key] or "—" }}</a>
+            {% elif key == "result" or key == "status" %}
+            <span data-status class="status-pill">{% if row[key] == 'open' %}مفتوحة{% elif row[key] == 'in_progress' %}قيد التنفيذ{% elif row[key] == 'done' %}منجزة{% else %}{{ row[key] or "—" }}{% endif %}</span>
+            {% else %}
+            {{ row[key] or "—" }}
+            {% endif %}
+          </td>
+          {% endfor %}
+          <td class="px-3 py-3">
+            <div class="flex flex-wrap gap-2">
+              <a class="btn-secondary px-3 py-1 text-xs" href="{{ url_for('table_edit', table=table, row_id=row['id']) }}">تعديل</a>
+              {% if table == "cases" %}
+              <a class="btn-secondary px-3 py-1 text-xs" href="{{ url_for('table_create', table='sessions') }}?case_id={{ row['id'] }}">+ جلسة</a>
+              {% endif %}
+              <form method="post" action="{{ url_for('table_delete', table=table, row_id=row['id']) }}" onsubmit="return confirm('تأكيد الحذف؟')">
+                <button type="submit" class="btn-danger px-3 py-1 text-xs">حذف</button>
+              </form>
+              {% if table == "documents" %}
+              <form method="post" action="{{ url_for('upload_doc_file', doc_id=row['id']) }}" enctype="multipart/form-data" class="flex items-center gap-1">
+                <input type="file" name="file" class="max-w-[140px] rounded-lg border border-white/20 bg-white/10 px-2 py-1 text-xs text-slate-100">
+                <button type="submit" class="btn-secondary px-2 py-1 text-xs">رفع</button>
+              </form>
+              <a class="btn-secondary px-2 py-1 text-xs" href="{{ url_for('download_doc_file', doc_id=row['id']) }}">تحميل</a>
+              {% endif %}
+            </div>
+          </td>
+        </tr>
+        {% else %}
+        <tr><td colspan="99" class="px-3 py-8 text-center text-slate-300">لا توجد بيانات — <a href="{{ url_for('table_create', table=table) }}" class="smart-link">أضف سجلاً جديداً</a></td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+{% endblock %}

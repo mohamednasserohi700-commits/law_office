@@ -1,0 +1,86 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="smart-form-page">
+  <header class="smart-form-hero card-base glass-panel">
+    <div class="smart-form-hero-text">
+      <p class="smart-form-kicker">👥 ملف العميل الذكي</p>
+      <h1 class="text-2xl font-extrabold text-white">{{ "تعديل عميل" if row else "إضافة عميل جديد" }}</h1>
+      <p class="mt-1 text-sm text-slate-300">سجّل بيانات العميل بدقة لتتمكن من ربطه بالقضايا والعقود والمدفوعات.</p>
+    </div>
+    <a class="btn-secondary px-4 py-2 text-sm font-semibold" href="{{ url_for('table_list', table='clients') }}">← العودة للقائمة</a>
+  </header>
+
+  <form method="post" class="smart-form card-base glass-panel" data-smart-form="client" novalidate>
+    <section class="smart-form-section">
+      <h2 class="smart-form-section-title"><span>1</span> البيانات الأساسية</h2>
+      <div class="smart-form-grid">
+        <div class="smart-field smart-field-span-2">
+          <label class="smart-label" for="name">اسم العميل <span class="smart-req">*</span></label>
+          <input class="input-base" id="name" name="name" required value="{{ row['name'] if row else '' }}" placeholder="الاسم الكامل أو اسم الشركة">
+        </div>
+        <div class="smart-field">
+          <label class="smart-label" for="type">نوع العميل</label>
+          <select class="input-base" id="type" name="type">
+            {% for opt in client_types %}
+            <option value="{{ opt }}" {% if row and row['type'] == opt %}selected{% elif not row and opt == 'فرد' %}selected{% endif %}>{{ opt }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="smart-field">
+          <label class="smart-label" for="id_num">رقم الهوية / السجل</label>
+          <input class="input-base" id="id_num" name="id_num" value="{{ row['id_num'] if row else '' }}">
+        </div>
+        <div class="smart-field">
+          <label class="smart-label" for="active">الحالة</label>
+          <select class="input-base" id="active" name="active">
+            <option value="1" {% if not row or row['active'] %}selected{% endif %}>نشط</option>
+            <option value="0" {% if row and not row['active'] %}selected{% endif %}>موقوف</option>
+          </select>
+        </div>
+      </div>
+    </section>
+
+    <section class="smart-form-section">
+      <h2 class="smart-form-section-title"><span>2</span> بيانات التواصل</h2>
+      <div class="smart-form-grid">
+        <div class="smart-field">
+          <label class="smart-label" for="phone">الهاتف <span class="smart-req">*</span></label>
+          <input class="input-base" id="phone" name="phone" required type="tel" value="{{ row['phone'] if row else '' }}" placeholder="01xxxxxxxxx">
+        </div>
+        <div class="smart-field">
+          <label class="smart-label" for="phone2">هاتف إضافي</label>
+          <input class="input-base" id="phone2" name="phone2" type="tel" value="{{ row['phone2'] if row else '' }}">
+        </div>
+        <div class="smart-field smart-field-span-2">
+          <label class="smart-label" for="email">البريد الإلكتروني</label>
+          <input class="input-base" id="email" name="email" type="email" value="{{ row['email'] if row else '' }}" placeholder="example@mail.com">
+        </div>
+        <div class="smart-field">
+          <label class="smart-label" for="job">الوظيفة / النشاط</label>
+          <input class="input-base" id="job" name="job" value="{{ row['job'] if row else '' }}">
+        </div>
+        <div class="smart-field smart-field-span-2">
+          <label class="smart-label" for="address">العنوان</label>
+          <input class="input-base" id="address" name="address" value="{{ row['address'] if row else '' }}">
+        </div>
+      </div>
+    </section>
+
+    <section class="smart-form-section">
+      <h2 class="smart-form-section-title"><span>3</span> ملاحظات</h2>
+      <div class="smart-field">
+        <label class="smart-label" for="notes">ملاحظات إضافية</label>
+        <textarea class="input-base smart-textarea" id="notes" name="notes" rows="4" placeholder="أي تفاصيل مهمة عن العميل أو تفضيلات التواصل...">{{ row['notes'] if row else '' }}</textarea>
+      </div>
+    </section>
+
+    <footer class="smart-form-actions">
+      <button type="submit" class="btn-primary px-6 py-2 text-sm font-semibold">حفظ العميل</button>
+      <a class="btn-secondary px-6 py-2 text-sm font-semibold" href="{{ url_for('table_list', table='clients') }}">إلغاء</a>
+    </footer>
+  </form>
+</section>
+{% endblock %}
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/smart-forms.js') }}" defer></script>
+{% endblock %}

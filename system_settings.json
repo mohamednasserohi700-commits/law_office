@@ -1,0 +1,9 @@
+{
+  "system_name": "المستشار القانوني",
+  "tenant_overrides": {
+    "main": {
+      "label": "المكتب الاساسي",
+      "branch": "الجيزة"
+    }
+  }
+}

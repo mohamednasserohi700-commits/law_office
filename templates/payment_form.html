@@ -1,0 +1,73 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="smart-form-page">
+  <header class="smart-form-hero card-base glass-panel">
+    <div class="smart-form-hero-text">
+      <p class="smart-form-kicker">💳 المدفوعات</p>
+      <h1 class="text-2xl font-extrabold text-white">{{ "تعديل دفعة" if row else "تسجيل دفعة" }}</h1>
+      <p class="mt-1 text-sm text-slate-300">اربط الدفعة بالعميل والقضية لتظهر في التقارير المالية.</p>
+    </div>
+    <a class="btn-secondary px-4 py-2 text-sm font-semibold" href="{{ url_for('table_list', table='payments') }}">← المدفوعات</a>
+  </header>
+
+  <form method="post" class="smart-form card-base glass-panel" data-smart-form="payment" novalidate>
+    <section class="smart-form-section">
+      <h2 class="smart-form-section-title"><span>1</span> الربط المالي</h2>
+      <div class="smart-form-grid">
+        <div class="smart-field smart-field-span-2">
+          <label class="smart-label">العميل <span class="smart-req">*</span></label>
+          {% with required=true, selected_client=selected_client, hint_extra='' %}
+          {% include "includes/picker_client.html" %}
+          {% endwith %}
+        </div>
+        <div class="smart-field smart-field-span-2">
+          <label class="smart-label">القضية (اختياري)</label>
+          {% with required=false, selected_case=selected_case, hint_extra='' %}
+          {% include "includes/picker_case.html" %}
+          {% endwith %}
+        </div>
+      </div>
+    </section>
+    <section class="smart-form-section">
+      <h2 class="smart-form-section-title"><span>2</span> تفاصيل الدفع</h2>
+      <div class="smart-form-grid">
+        <div class="smart-field">
+          <label class="smart-label" for="amount">المبلغ <span class="smart-req">*</span></label>
+          <input class="input-base" id="amount" name="amount" type="number" step="0.01" min="0" required value="{{ row['amount'] if row else '' }}">
+        </div>
+        <div class="smart-field">
+          <label class="smart-label" for="method">طريقة الدفع</label>
+          <select class="input-base" id="method" name="method">
+            {% for opt in payment_methods %}
+            <option value="{{ opt }}" {% if row and row['method'] == opt %}selected{% elif not row and opt == 'نقداً' %}selected{% endif %}>{{ opt }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="smart-field">
+          <label class="smart-label" for="pay_date">تاريخ الدفع</label>
+          <input class="input-base" id="pay_date" name="pay_date" type="date" value="{{ row['pay_date'] if row else '' }}">
+        </div>
+        <div class="smart-field">
+          <label class="smart-label" for="reference">المرجع</label>
+          <input class="input-base" id="reference" name="reference" value="{{ row['reference'] if row else '' }}">
+        </div>
+        <div class="smart-field smart-field-span-2">
+          <label class="smart-label" for="notes">ملاحظات</label>
+          <textarea class="input-base smart-textarea" id="notes" name="notes" rows="2">{{ row['notes'] if row else '' }}</textarea>
+        </div>
+        <div class="smart-field">
+          <label class="smart-label" for="recorded_by">سجّل بواسطة</label>
+          <input class="input-base" id="recorded_by" name="recorded_by" value="{{ row['recorded_by'] if row else session.get('username', '') }}">
+        </div>
+      </div>
+    </section>
+    <footer class="smart-form-actions">
+      <button type="submit" class="btn-primary px-6 py-2.5 text-sm font-semibold">حفظ الدفعة</button>
+      <a class="btn-secondary px-6 py-2.5 text-sm font-semibold" href="{{ url_for('table_list', table='payments') }}">إلغاء</a>
+    </footer>
+  </form>
+</section>
+{% endblock %}
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/smart-forms.js') }}" defer></script>
+{% endblock %}

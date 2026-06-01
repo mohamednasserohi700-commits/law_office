@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="login-hero">
+  <div class="login-split">
+    <div class="login-brand glass-panel">
+      <div class="login-brand-inner">
+        <div class="login-brand-logo">
+          <img src="{{ url_for('brand_logo') }}" alt="Law Office Pro Logo" class="logo-static-img login-burnt-img">
+        </div>
+        <h1 class="login-title">{{ system_name or "Law Office Pro" }}</h1>
+      </div>
+    </div>
+
+    <div class="login-card glass-panel">
+      <div class="login-card-head">
+        <div class="login-card-logo">
+          <img src="{{ url_for('brand_logo') }}" alt="Law Office Pro Logo" class="logo-static-img login-card-logo-img login-burnt-img">
+        </div>
+        <h2 class="text-2xl font-extrabold text-white">تسجيل الدخول</h2>
+      </div>
+      <form method="post" class="space-y-4">
+        <div>
+          <label class="mb-2 block text-sm font-semibold text-slate-200">الشركة القانونية</label>
+          <select class="input-base" name="tenant_slug" required>
+            {% for t in tenants or [] %}
+            <option value="{{ t['slug'] }}" {% if selected_tenant_slug == t['slug'] %}selected{% endif %}>{{ t["name"] }} - {{ t["subscription_plan"] }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div>
+          <label class="mb-2 block text-sm font-semibold text-slate-200">اسم المستخدم</label>
+          <input class="input-base" name="username" required>
+        </div>
+        <div>
+          <label class="mb-2 block text-sm font-semibold text-slate-200">كلمة المرور</label>
+          <input class="input-base" type="password" name="password" required>
+        </div>
+        <button class="btn-primary mt-2 w-full px-4 py-2 text-sm font-semibold" type="submit">دخول إلى المنصة</button>
+      </form>
+      <div class="login-footnote">© 2026 · Law Office Pro</div>
+    </div>
+  </div>
+</section>
+{% endblock %}

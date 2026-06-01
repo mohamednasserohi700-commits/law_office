@@ -1,0 +1,83 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="smart-form-page">
+  <header class="smart-form-hero card-base glass-panel">
+    <div class="smart-form-hero-text">
+      <p class="smart-form-kicker">🛡️ إدارة المستخدمين</p>
+      <h1 class="text-2xl font-extrabold text-white">{{ "تعديل مستخدم" if row else "إضافة مستخدم جديد" }}</h1>
+      <p class="mt-1 text-sm text-slate-300">حدّد بيانات الدخول والدور والصلاحيات بشكل واضح وآمن.</p>
+    </div>
+    <a class="btn-secondary px-4 py-2 text-sm font-semibold" href="{{ url_for('table_list', table='users') }}">← العودة للقائمة</a>
+  </header>
+
+  <form method="post" class="smart-form card-base glass-panel">
+    <section class="smart-form-section">
+      <h2 class="smart-form-section-title"><span>1</span> بيانات الحساب</h2>
+      <div class="smart-form-grid">
+        <div class="smart-field">
+          <label class="smart-label" for="name">الاسم <span class="smart-req">*</span></label>
+          <input class="input-base" id="name" name="name" value="{{ row['name'] if row else '' }}" required>
+        </div>
+        <div class="smart-field">
+          <label class="smart-label" for="username">اسم المستخدم <span class="smart-req">*</span></label>
+          <input class="input-base" id="username" name="username" value="{{ row['username'] if row else '' }}" required autocomplete="username">
+        </div>
+        <div class="smart-field">
+          <label class="smart-label" for="email">البريد الإلكتروني</label>
+          <input class="input-base" id="email" name="email" type="email" value="{{ row['email'] if row else '' }}">
+        </div>
+        <div class="smart-field">
+          <label class="smart-label" for="phone">الهاتف</label>
+          <input class="input-base" id="phone" name="phone" type="tel" value="{{ row['phone'] if row else '' }}">
+        </div>
+        <div class="smart-field">
+          <label class="smart-label" for="role">الدور</label>
+          <select class="input-base" id="role" name="role">
+            {% for rv, rl in roles %}
+            <option value="{{ rv }}" {% if row and row["role"] == rv %}selected{% endif %}>{{ rl }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="smart-field">
+          <label class="smart-label" for="active">الحالة</label>
+          <select class="input-base" id="active" name="active">
+            <option value="1" {% if not row or row["active"] %}selected{% endif %}>نشط</option>
+            <option value="0" {% if row and not row["active"] %}selected{% endif %}>موقوف</option>
+          </select>
+        </div>
+        <div class="smart-field smart-field-span-2">
+          <label class="smart-label" for="expire_msg">رسالة إضافية</label>
+          <input class="input-base" id="expire_msg" name="expire_msg" value="{{ row['expire_msg'] if row else '' }}" placeholder="رسالة تظهر للمستخدم عند الحاجة">
+        </div>
+        <div class="smart-field smart-field-span-2">
+          <label class="smart-label" for="password">كلمة المرور {% if row %}<span class="text-slate-400 font-medium">(اتركها فارغة للإبقاء على الحالية)</span>{% else %}<span class="smart-req">*</span>{% endif %}</label>
+          <input class="input-base" id="password" name="password" type="password" autocomplete="new-password" {% if not row %}required{% endif %}>
+        </div>
+      </div>
+    </section>
+
+    <section class="smart-form-section">
+      <h2 class="smart-form-section-title"><span>2</span> الصلاحيات اليدوية</h2>
+      {% set selected = user_permissions if user_permissions is defined else [] %}
+      <div class="smart-perms-box">
+        {% for pv, pl in permission_options %}
+        {% if pv != "connected_users_view" or user_role == "dev_master" %}
+        <label class="smart-perm-item">
+          <input type="checkbox" name="permissions" value="{{ pv }}" {% if pv in selected %}checked{% endif %}>
+          <span>{{ pl }}</span>
+        </label>
+        {% endif %}
+        {% endfor %}
+      </div>
+      {% if user_role != "dev_master" %}
+      <p class="smart-picker-hint" style="margin-top:10px;color:#fcd34d;">صلاحية شاشة المتصلين لا يمنحها إلا مطور النظام.</p>
+      {% endif %}
+    </section>
+
+    <footer class="smart-form-actions">
+      <button type="submit" class="btn-primary px-6 py-2.5 text-sm font-semibold">حفظ المستخدم</button>
+      <a class="btn-secondary px-6 py-2.5 text-sm font-semibold" href="{{ url_for('table_list', table='users') }}">إلغاء</a>
+    </footer>
+  </form>
+</section>
+{% endblock %}

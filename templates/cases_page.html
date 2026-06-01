@@ -1,0 +1,90 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="mb-6 card-base glass-panel p-4">
+  <div class="flex flex-wrap items-center justify-between gap-3">
+    <div>
+      <h1 class="text-2xl font-extrabold text-white">⚖️ إدارة القضايا</h1>
+      <p class="mt-1 text-sm text-slate-300">تصنيف ذكي: مفتوحة، مؤجلة، مقفولة، ومنتهية — مع ربط العميل.</p>
+    </div>
+    <div class="flex flex-wrap gap-2">
+      <form method="get" class="flex gap-2">
+        <input type="hidden" name="status" value="{{ status_filter }}">
+        <input class="input-base w-64" name="q" value="{{ q or '' }}" placeholder="بحث برقم القضية، الموضوع، العميل..." />
+        <button type="submit" class="btn-secondary px-3 py-2 text-sm">بحث</button>
+      </form>
+      <a href="{{ url_for('table_create', table='cases') }}" class="btn-primary px-4 py-2 text-sm font-semibold">+ قضية جديدة</a>
+    </div>
+  </div>
+</section>
+
+<section class="mb-4 grid grid-cols-2 gap-3 md:grid-cols-4">
+  <div class="case-stat-card">
+    <span class="case-stat-label">إجمالي القضايا</span>
+    <span class="case-stat-value">{{ case_stats.total }}</span>
+  </div>
+  <div class="case-stat-card case-stat-active">
+    <span class="case-stat-label">مفتوحة / نشطة</span>
+    <span class="case-stat-value">{{ case_stats.active }}</span>
+  </div>
+  <div class="case-stat-card case-stat-pending">
+    <span class="case-stat-label">مؤجلة</span>
+    <span class="case-stat-value">{{ case_stats.postponed }}</span>
+  </div>
+  <div class="case-stat-card case-stat-closed">
+    <span class="case-stat-label">مقفولة / منتهية</span>
+    <span class="case-stat-value">{{ case_stats.closed }}</span>
+  </div>
+</section>
+
+<section class="mb-4 flex flex-wrap gap-2">
+  {% for key, label in status_filters %}
+  <a href="{{ url_for('table_list', table='cases', status=key, q=q or '') }}"
+     class="case-filter-tab {% if status_filter == key %}active{% endif %}">{{ label }}</a>
+  {% endfor %}
+</section>
+
+<section class="card-base glass-panel table-wrap p-3">
+  <div class="overflow-x-auto max-h-[65vh]">
+    <table class="table-premium cases-smart-table">
+      <thead>
+        <tr class="border-b border-white/15 text-xs text-slate-300">
+          <th class="px-3 py-3">#</th>
+          <th class="px-3 py-3">رقم القضية</th>
+          <th class="px-3 py-3">الموضوع</th>
+          <th class="px-3 py-3">العميل</th>
+          <th class="px-3 py-3">النوع</th>
+          <th class="px-3 py-3">الحالة</th>
+          <th class="px-3 py-3">المحكمة</th>
+          <th class="px-3 py-3">إجراءات</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for row in rows %}
+        <tr class="text-slate-100 {% if row['status'] in ['مقفولة','مغلقة','منتهية'] %}case-row-closed{% elif row['status'] == 'مؤجلة' %}case-row-postponed{% endif %}">
+          <td class="px-3 py-3 text-slate-300">{{ row["id"] }}</td>
+          <td class="px-3 py-3 font-semibold">{{ row["case_num"] }}</td>
+          <td class="px-3 py-3">{{ row["subject"] }}</td>
+          <td class="px-3 py-3 text-sm">{{ row["client_name"] or "—" }}</td>
+          <td class="px-3 py-3">{{ row["type"] }}</td>
+          <td class="px-3 py-3">
+            <span data-status class="status-pill">{{ row["status"] or "مفتوحة" }}</span>
+          </td>
+          <td class="px-3 py-3">{{ row["court"] or "—" }}</td>
+          <td class="px-3 py-3">
+            <div class="flex flex-wrap gap-2">
+              <a class="btn-secondary px-3 py-1 text-xs" href="{{ url_for('table_edit', table='cases', row_id=row['id']) }}">تعديل</a>
+              <a class="btn-secondary px-3 py-1 text-xs" href="{{ url_for('table_create', table='sessions') }}?case_id={{ row['id'] }}">+ جلسة</a>
+              <form method="post" action="{{ url_for('table_delete', table='cases', row_id=row['id']) }}" onsubmit="return confirm('تأكيد حذف القضية؟')">
+                <button type="submit" class="btn-danger px-3 py-1 text-xs">حذف</button>
+              </form>
+            </div>
+          </td>
+        </tr>
+        {% else %}
+        <tr><td colspan="8" class="px-3 py-8 text-center text-slate-300">لا توجد قضايا في هذا التصنيف.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+{% endblock %}

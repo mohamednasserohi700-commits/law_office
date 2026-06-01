@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="connected-head card-base glass-panel p-4">
+  <div class="connected-head-row">
+    <div>
+      <h1 class="text-2xl font-extrabold text-white">المتصلون</h1>
+      <p class="mt-1 text-sm text-slate-300">حالة كل مستخدم وآخر اتصال بالنظام — محدّث تلقائيًا.</p>
+    </div>
+    <div class="connected-stats">
+      <span class="status-pill status-online">{{ online_count }} متصل</span>
+      <span class="status-pill status-offline">{{ offline_count }} غير متصل</span>
+    </div>
+  </div>
+</section>
+
+<section class="connected-grid">
+  {% for r in rows %}
+  <article class="connected-card card-base glass-panel {% if r.is_live %}connected-card-live{% endif %}">
+    <div class="connected-card-top">
+      <div class="connected-avatar">{{ r.username[:1] | upper }}</div>
+      <div class="connected-card-meta">
+        <h2 class="connected-username">{{ r.username }}</h2>
+        <span class="status-pill {{ r.status_class }}" data-status>{{ r.status_label }}</span>
+      </div>
+    </div>
+    <dl class="connected-details">
+      <div class="connected-detail-row">
+        <dt>آخر اتصال</dt>
+        <dd>
+          <strong>{{ r.last_seen_label }}</strong>
+          {% if r.last_seen_detail %}
+          <span class="connected-detail-sub">{{ r.last_seen_detail }}</span>
+          {% endif %}
+        </dd>
+      </div>
+      <div class="connected-detail-row">
+        <dt>الجهاز</dt>
+        <dd class="connected-device" title="{{ r.device_name }}">{{ r.device_short }}</dd>
+      </div>
+      <div class="connected-detail-row">
+        <dt>عنوان IP</dt>
+        <dd><code class="connected-ip">{{ r.ip or "—" }}</code></dd>
+      </div>
+    </dl>
+  </article>
+  {% else %}
+  <div class="connected-empty card-base glass-panel">
+    <p class="text-lg font-bold text-white">لا يوجد سجل مستخدمين حالياً</p>
+    <p class="mt-2 text-sm text-slate-300">سيظهر هنا من سجّل دخوله مؤخرًا إلى النظام.</p>
+  </div>
+  {% endfor %}
+</section>
+{% endblock %}

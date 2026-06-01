@@ -1,0 +1,90 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="smart-form-page">
+  <header class="smart-form-hero card-base glass-panel">
+    <div class="smart-form-hero-text">
+      <p class="smart-form-kicker">🗂️ المستندات</p>
+      <h1 class="text-2xl font-extrabold text-white">{{ "تعديل مستند" if row else "إضافة مستند" }}</h1>
+      <p class="mt-1 text-sm text-slate-300">سجّل بيانات المستند وارفع الملف مباشرة (PDF، Word، صور...).</p>
+    </div>
+    <a class="btn-secondary px-4 py-2 text-sm font-semibold" href="{{ url_for('table_list', table='documents') }}">← المستندات</a>
+  </header>
+
+  <form method="post" enctype="multipart/form-data" class="smart-form card-base glass-panel" data-smart-form="document" novalidate>
+    <section class="smart-form-section">
+      <h2 class="smart-form-section-title"><span>1</span> بيانات المستند</h2>
+      <div class="smart-form-grid">
+        <div class="smart-field">
+          <label class="smart-label" for="doc_name">اسم المستند <span class="smart-req">*</span></label>
+          <input class="input-base" id="doc_name" name="doc_name" required value="{{ row['doc_name'] if row else '' }}">
+        </div>
+        <div class="smart-field">
+          <label class="smart-label" for="doc_type">نوع المستند</label>
+          <select class="input-base" id="doc_type" name="doc_type">
+            <option value="">— اختر —</option>
+            {% for opt in doc_types %}
+            <option value="{{ opt }}" {% if row and row['doc_type'] == opt %}selected{% endif %}>{{ opt }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="smart-field">
+          <label class="smart-label" for="doc_date">التاريخ</label>
+          <input class="input-base" id="doc_date" name="doc_date" type="date" value="{{ row['doc_date'] if row else '' }}">
+        </div>
+        <div class="smart-field smart-field-span-2">
+          <label class="smart-label">العميل (اختياري)</label>
+          {% with required=false, selected_client=selected_client, hint_extra='' %}
+          {% include "includes/picker_client.html" %}
+          {% endwith %}
+        </div>
+        <div class="smart-field smart-field-span-2">
+          <label class="smart-label">القضية (اختياري)</label>
+          {% with required=false, selected_case=selected_case, hint_extra='' %}
+          {% include "includes/picker_case.html" %}
+          {% endwith %}
+        </div>
+        <div class="smart-field smart-field-span-2">
+          <label class="smart-label" for="notes">ملاحظات</label>
+          <textarea class="input-base smart-textarea" id="notes" name="notes" rows="2">{{ row['notes'] if row else '' }}</textarea>
+        </div>
+      </div>
+    </section>
+
+    <section class="smart-form-section">
+      <h2 class="smart-form-section-title"><span>2</span> رفع الملف</h2>
+      {% if attached_file %}
+      <div class="file-attached-banner">
+        <span>📎 ملف مرفق حالياً: <strong>{{ attached_file.original_name }}</strong>
+          ({{ ((attached_file.size_bytes or 0) / 1024)|round(1) }} ك.ب)</span>
+        <a class="btn-secondary px-3 py-1 text-xs" href="{{ url_for('download_doc_file', doc_id=row['id']) }}">تحميل</a>
+      </div>
+      <p class="smart-picker-hint">اختر ملفاً جديداً أدناه لاستبدال الملف الحالي (اختياري).</p>
+      {% endif %}
+      <div class="file-upload-zone">
+        <input type="file" id="doc_file" name="file" class="file-upload-input" accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.gif,.webp,.txt,.rtf,.xls,.xlsx">
+        <label for="doc_file" class="file-upload-label">
+          <span class="file-upload-icon">📤</span>
+          <span class="file-upload-title">اضغط لاختيار ملف أو اسحبه هنا</span>
+          <span class="file-upload-sub">PDF · Word · Excel · صور — حتى 32 ميجابايت</span>
+          <span class="file-upload-name" id="file-upload-name"></span>
+        </label>
+      </div>
+    </section>
+
+    <footer class="smart-form-actions">
+      <button type="submit" class="btn-primary px-6 py-2.5 text-sm font-semibold">حفظ ورفع</button>
+      <a class="btn-secondary px-6 py-2.5 text-sm font-semibold" href="{{ url_for('table_list', table='documents') }}">إلغاء</a>
+    </footer>
+  </form>
+</section>
+{% endblock %}
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/smart-forms.js') }}" defer></script>
+<script>
+document.getElementById('doc_file')?.addEventListener('change', (e) => {
+  const nameEl = document.getElementById('file-upload-name');
+  const f = e.target.files?.[0];
+  if (nameEl) nameEl.textContent = f ? `الملف المختار: ${f.name}` : '';
+});
+</script>
+{% endblock %}

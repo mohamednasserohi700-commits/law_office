@@ -1,0 +1,131 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="smart-form-page">
+  <header class="smart-form-hero card-base glass-panel">
+    <div class="smart-form-hero-text">
+      <p class="smart-form-kicker">⚖️ إدارة القضايا الذكية</p>
+      <h1 class="text-2xl font-extrabold text-white">{{ "تعديل قضية" if row else "إضافة قضية جديدة" }}</h1>
+      <p class="mt-1 text-sm text-slate-300">اربط القضية بعميل مسجّل، واملأ بيانات المحكمة والمتابعة بشكل منظم.</p>
+    </div>
+    <a class="btn-secondary px-4 py-2 text-sm font-semibold" href="{{ url_for('table_list', table='cases') }}">← العودة للقائمة</a>
+  </header>
+
+  <form method="post" class="smart-form card-base glass-panel" data-smart-form="case" novalidate>
+    <section class="smart-form-section">
+      <h2 class="smart-form-section-title"><span>1</span> المعلومات الأساسية</h2>
+      <div class="smart-form-grid">
+        <div class="smart-field">
+          <label class="smart-label" for="case_num">رقم القضية <span class="smart-req">*</span></label>
+          <input class="input-base" id="case_num" name="case_num" required value="{{ row['case_num'] if row else '' }}" placeholder="مثال: 1234 / 2026">
+        </div>
+
+        <div class="smart-field smart-field-span-2">
+          <label class="smart-label">العميل <span class="smart-req">*</span></label>
+          <div class="smart-picker" data-client-picker
+               data-initial-id="{{ selected_client['id'] if selected_client else '' }}"
+               data-initial-name="{{ (selected_client['name'] if selected_client else '')|e }}"
+               data-initial-phone="{{ (selected_client['phone'] if selected_client else '')|e }}"
+               data-initial-type="{{ (selected_client['type'] if selected_client else '')|e }}">
+            <input type="hidden" name="client_id" value="{{ selected_client['id'] if selected_client else '' }}" required>
+            <div class="smart-picker-search-wrap">
+              <span class="smart-picker-icon">🔍</span>
+              <input type="text" class="input-base smart-picker-search" placeholder="ابحث بالاسم أو الهاتف أو رقم الهوية..." autocomplete="off">
+            </div>
+            <div class="smart-picker-selected hidden">
+              <div class="smart-picker-chip">
+                <div class="smart-picker-chip-main">
+                  <span class="smart-picker-chip-name"></span>
+                  <span class="smart-picker-chip-meta"></span>
+                </div>
+                <button type="button" class="smart-picker-clear" aria-label="إزالة العميل">✕</button>
+              </div>
+            </div>
+            <div class="smart-picker-dropdown hidden" role="listbox"></div>
+            <p class="smart-picker-hint">
+              <a href="{{ url_for('table_create', table='clients') }}" class="smart-link">+ إضافة عميل جديد</a>
+              ثم ارجع لاختياره من القائمة
+            </p>
+          </div>
+        </div>
+
+        <div class="smart-field smart-field-span-2">
+          <label class="smart-label" for="subject">موضوع القضية <span class="smart-req">*</span></label>
+          <input class="input-base" id="subject" name="subject" required value="{{ row['subject'] if row else '' }}" placeholder="وصف مختصر لموضوع الدعوى">
+        </div>
+
+        <div class="smart-field">
+          <label class="smart-label" for="type">نوع القضية</label>
+          <select class="input-base" id="type" name="type">
+            {% for opt in case_types %}
+            <option value="{{ opt }}" {% if row and row['type'] == opt %}selected{% elif not row and opt == 'مدنية' %}selected{% endif %}>{{ opt }}</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <div class="smart-field smart-field-span-2">
+          <label class="smart-label">حالة القضية <span class="smart-req">*</span></label>
+          <div class="case-status-picker">
+            {% for opt in case_statuses %}
+            <label class="case-status-option">
+              <input type="radio" name="status" value="{{ opt }}" {% if row and row['status'] == opt %}checked{% elif not row and opt == 'مفتوحة' %}checked{% endif %}>
+              <span class="case-status-option-box">
+                <span data-status class="status-pill">{{ opt }}</span>
+              </span>
+            </label>
+            {% endfor %}
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="smart-form-section">
+      <h2 class="smart-form-section-title"><span>2</span> المحكمة والإجراءات</h2>
+      <div class="smart-form-grid">
+        <div class="smart-field">
+          <label class="smart-label" for="court">المحكمة</label>
+          <input class="input-base" id="court" name="court" value="{{ row['court'] if row else '' }}" placeholder="اسم المحكمة">
+        </div>
+        <div class="smart-field">
+          <label class="smart-label" for="dept">الدائرة</label>
+          <input class="input-base" id="dept" name="dept" value="{{ row['dept'] if row else '' }}" placeholder="الدائرة / الشعبة">
+        </div>
+        <div class="smart-field">
+          <label class="smart-label" for="judge">القاضي</label>
+          <input class="input-base" id="judge" name="judge" value="{{ row['judge'] if row else '' }}">
+        </div>
+        <div class="smart-field">
+          <label class="smart-label" for="case_date">تاريخ القضية</label>
+          <input class="input-base" id="case_date" name="case_date" type="date" value="{{ row['case_date'] if row else '' }}">
+        </div>
+        <div class="smart-field">
+          <label class="smart-label" for="fees">الرسوم</label>
+          <input class="input-base" id="fees" name="fees" type="number" step="0.01" min="0" value="{{ row['fees'] if row else '0' }}">
+        </div>
+        <div class="smart-field">
+          <label class="smart-label" for="opponent">الخصم</label>
+          <input class="input-base" id="opponent" name="opponent" value="{{ row['opponent'] if row else '' }}">
+        </div>
+      </div>
+    </section>
+
+    <section class="smart-form-section">
+      <h2 class="smart-form-section-title"><span>3</span> ملاحظات ومتابعة</h2>
+      <div class="smart-field">
+        <label class="smart-label" for="description">الوصف / ملاحظات</label>
+        <textarea class="input-base smart-textarea" id="description" name="description" rows="4" placeholder="تفاصيل إضافية، مستندات مطلوبة، ملاحظات المتابعة...">{{ row['description'] if row else '' }}</textarea>
+      </div>
+    </section>
+
+    <footer class="smart-form-actions">
+      <button type="submit" class="btn-primary px-6 py-2.5 text-sm font-semibold">حفظ القضية</button>
+      <a class="btn-secondary px-6 py-2.5 text-sm font-semibold" href="{{ url_for('table_list', table='cases') }}">إلغاء</a>
+      {% if row %}
+      <a class="btn-secondary px-6 py-2.5 text-sm font-semibold" href="{{ url_for('table_create', table='sessions') }}?case_id={{ row['id'] }}">+ إضافة جلسة</a>
+      {% endif %}
+    </footer>
+  </form>
+</section>
+{% endblock %}
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/smart-forms.js') }}" defer></script>
+{% endblock %}

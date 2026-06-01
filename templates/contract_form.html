@@ -1,0 +1,77 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="smart-form-page">
+  <header class="smart-form-hero card-base glass-panel">
+    <div class="smart-form-hero-text">
+      <p class="smart-form-kicker">📜 العقود</p>
+      <h1 class="text-2xl font-extrabold text-white">{{ "تعديل عقد" if row else "إضافة عقد" }}</h1>
+      <p class="mt-1 text-sm text-slate-300">اربط العقد بالعميل والقضية في ملف واحد متكامل.</p>
+    </div>
+    <a class="btn-secondary px-4 py-2 text-sm font-semibold" href="{{ url_for('table_list', table='contracts') }}">← العقود</a>
+  </header>
+
+  <form method="post" class="smart-form card-base glass-panel" data-smart-form="contract" novalidate>
+    <section class="smart-form-section">
+      <h2 class="smart-form-section-title"><span>1</span> الأطراف والربط</h2>
+      <div class="smart-form-grid">
+        <div class="smart-field">
+          <label class="smart-label" for="contract_num">رقم العقد <span class="smart-req">*</span></label>
+          <input class="input-base" id="contract_num" name="contract_num" required value="{{ row['contract_num'] if row else '' }}">
+        </div>
+        <div class="smart-field">
+          <label class="smart-label" for="type">نوع العقد</label>
+          <input class="input-base" id="type" name="type" value="{{ row['type'] if row else '' }}" placeholder="أتعاب، استشارة...">
+        </div>
+        <div class="smart-field smart-field-span-2">
+          <label class="smart-label">العميل <span class="smart-req">*</span></label>
+          {% with required=true, selected_client=selected_client, hint_extra='' %}
+          {% include "includes/picker_client.html" %}
+          {% endwith %}
+        </div>
+        <div class="smart-field smart-field-span-2">
+          <label class="smart-label">القضية (اختياري)</label>
+          {% with required=false, selected_case=selected_case, hint_extra='' %}
+          {% include "includes/picker_case.html" %}
+          {% endwith %}
+        </div>
+      </div>
+    </section>
+    <section class="smart-form-section">
+      <h2 class="smart-form-section-title"><span>2</span> الشروط المالية</h2>
+      <div class="smart-form-grid">
+        <div class="smart-field">
+          <label class="smart-label" for="fees">الأتعاب</label>
+          <input class="input-base" id="fees" name="fees" type="number" step="0.01" min="0" value="{{ row['fees'] if row else '0' }}">
+        </div>
+        <div class="smart-field">
+          <label class="smart-label" for="pay_method">طريقة السداد</label>
+          <select class="input-base" id="pay_method" name="pay_method">
+            {% for opt in payment_methods %}
+            <option value="{{ opt }}" {% if row and row['pay_method'] == opt %}selected{% endif %}>{{ opt }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="smart-field">
+          <label class="smart-label" for="sign_date">تاريخ التوقيع</label>
+          <input class="input-base" id="sign_date" name="sign_date" type="date" value="{{ row['sign_date'] if row else '' }}">
+        </div>
+        <div class="smart-field">
+          <label class="smart-label" for="end_date">تاريخ الانتهاء</label>
+          <input class="input-base" id="end_date" name="end_date" type="date" value="{{ row['end_date'] if row else '' }}">
+        </div>
+        <div class="smart-field smart-field-span-2">
+          <label class="smart-label" for="terms">البنود</label>
+          <textarea class="input-base smart-textarea" id="terms" name="terms" rows="4">{{ row['terms'] if row else '' }}</textarea>
+        </div>
+      </div>
+    </section>
+    <footer class="smart-form-actions">
+      <button type="submit" class="btn-primary px-6 py-2.5 text-sm font-semibold">حفظ العقد</button>
+      <a class="btn-secondary px-6 py-2.5 text-sm font-semibold" href="{{ url_for('table_list', table='contracts') }}">إلغاء</a>
+    </footer>
+  </form>
+</section>
+{% endblock %}
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/smart-forms.js') }}" defer></script>
+{% endblock %}
