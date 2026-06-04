@@ -147,3 +147,87 @@
     else if (value.includes("منتهية")) node.classList.add("status-finished");
   });
 })();
+
+/* ═══════════════════════════════════════════════════════════════════
+   THEME SWITCHER
+   Reads/writes localStorage key "law-theme"
+   Injects the floating FAB into the page automatically
+   ═══════════════════════════════════════════════════════════════════ */
+(() => {
+  const THEME_KEY  = "law-theme";
+  const THEMES     = ["dark", "fiori", "emerald"];
+  const LABELS     = { dark: "أوبسيديان الداكن", fiori: "فيوري المؤسسي", emerald: "زمرد القانون" };
+  const ICONS      = { dark: "🌑", fiori: "🔷", emerald: "🟢" };
+
+  const getSaved = () => {
+    try { return localStorage.getItem(THEME_KEY) || "dark"; } catch (_) { return "dark"; }
+  };
+  const save = (t) => {
+    try { localStorage.setItem(THEME_KEY, t); } catch (_) {}
+  };
+
+  const applyTheme = (theme) => {
+    if (!THEMES.includes(theme)) theme = "dark";
+    document.documentElement.setAttribute("data-theme", theme);
+    save(theme);
+    document.querySelectorAll(".theme-option").forEach((el) => {
+      el.classList.toggle("active", el.dataset.theme === theme);
+    });
+    const tog = document.getElementById("theme-switcher-toggle");
+    if (tog) tog.textContent = ICONS[theme] || "🎨";
+  };
+
+  // Apply saved theme immediately
+  applyTheme(getSaved());
+
+  // Inject FAB after DOM ready
+  const injectSwitcher = () => {
+    if (document.getElementById("theme-switcher-fab")) return;
+
+    const fab = document.createElement("div");
+    fab.id        = "theme-switcher-fab";
+    fab.className = "theme-switcher-fab";
+    fab.innerHTML = `
+      <div id="theme-switcher-panel" class="theme-switcher-panel" role="menu" aria-label="اختيار الثيم">
+        ${THEMES.map(t => `
+          <button class="theme-option${getSaved() === t ? " active" : ""}" data-theme="${t}" role="menuitem" type="button">
+            <span class="theme-swatch theme-swatch-${t}" aria-hidden="true"></span>
+            ${LABELS[t]}
+          </button>
+        `).join("")}
+      </div>
+      <button id="theme-switcher-toggle" class="theme-switcher-toggle" type="button" aria-label="تبديل الثيم" title="تبديل الثيم">
+        ${ICONS[getSaved()] || "🎨"}
+      </button>
+    `;
+    document.body.appendChild(fab);
+
+    const panel  = fab.querySelector("#theme-switcher-panel");
+    const toggle = fab.querySelector("#theme-switcher-toggle");
+
+    toggle.addEventListener("click", (e) => {
+      e.stopPropagation();
+      panel.classList.toggle("open");
+    });
+
+    fab.querySelectorAll(".theme-option").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        applyTheme(btn.dataset.theme);
+        panel.classList.remove("open");
+      });
+    });
+
+    document.addEventListener("click", (e) => {
+      if (!fab.contains(e.target)) panel.classList.remove("open");
+    });
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "Escape") panel.classList.remove("open");
+    });
+  };
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", injectSwitcher);
+  } else {
+    injectSwitcher();
+  }
+})();
