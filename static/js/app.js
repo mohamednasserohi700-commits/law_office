@@ -4,9 +4,9 @@
   const sidebarToggle = document.getElementById("sidebar-toggle");
   const SIDEBAR_KEY = "law-sidebar-collapsed";
 
-  root.setAttribute("data-theme", "dark");
+  root.setAttribute("data-theme", localStorage.getItem("law-theme") || "saas");
   try {
-    localStorage.setItem("obsidian-theme", "dark");
+    // legacy key removed
   } catch (_err) {}
   if (themeIcon) themeIcon.textContent = "🌙";
 
@@ -223,6 +223,70 @@
     document.addEventListener("keydown", (e) => {
       if (e.key === "Escape") panel.classList.remove("open");
     });
+  };
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", injectSwitcher);
+  } else {
+    injectSwitcher();
+  }
+})();
+
+/* ── THEME SWITCHER OVERRIDE (replaces any previously appended switcher) ── */
+(() => {
+  const THEME_KEY = "law-theme";
+  const THEMES    = ["saas", "dark", "emerald"];
+  const LABELS    = { saas: "SaaS الأزرق المؤسسي", dark: "أوبسيديان الداكن", emerald: "زمرد القانون" };
+  const ICONS     = { saas: "🔷", dark: "🌑", emerald: "🟢" };
+
+  const getSaved = () => {
+    try { return localStorage.getItem(THEME_KEY) || "saas"; } catch (_) { return "saas"; }
+  };
+  const save = (t) => { try { localStorage.setItem(THEME_KEY, t); } catch (_) {} };
+
+  const applyTheme = (theme) => {
+    if (!THEMES.includes(theme)) theme = "saas";
+    document.documentElement.setAttribute("data-theme", theme);
+    save(theme);
+    document.querySelectorAll(".theme-option[data-theme]").forEach((el) => {
+      el.classList.toggle("active", el.dataset.theme === theme);
+    });
+    const tog = document.getElementById("theme-switcher-toggle");
+    if (tog) tog.textContent = ICONS[theme] || "🎨";
+  };
+
+  // Apply immediately
+  applyTheme(getSaved());
+
+  const injectSwitcher = () => {
+    const existing = document.getElementById("theme-switcher-fab");
+    if (existing) { existing.remove(); }
+
+    const fab = document.createElement("div");
+    fab.id = "theme-switcher-fab";
+    fab.className = "theme-switcher-fab";
+    const current = getSaved();
+    fab.innerHTML = `
+      <div id="theme-switcher-panel" class="theme-switcher-panel" role="menu" aria-label="اختيار الثيم">
+        ${THEMES.map(t => `
+          <button class="theme-option${current === t ? " active" : ""}" data-theme="${t}" role="menuitem" type="button">
+            <span class="theme-swatch theme-swatch-${t}" aria-hidden="true"></span>
+            ${LABELS[t]}
+          </button>`).join("")}
+      </div>
+      <button id="theme-switcher-toggle" class="theme-switcher-toggle" type="button" aria-label="تبديل الثيم" title="تبديل الثيم">
+        ${ICONS[current] || "🎨"}
+      </button>`;
+    document.body.appendChild(fab);
+
+    const panel  = fab.querySelector("#theme-switcher-panel");
+    const toggle = fab.querySelector("#theme-switcher-toggle");
+    toggle.addEventListener("click", (e) => { e.stopPropagation(); panel.classList.toggle("open"); });
+    fab.querySelectorAll(".theme-option").forEach((btn) => {
+      btn.addEventListener("click", () => { applyTheme(btn.dataset.theme); panel.classList.remove("open"); });
+    });
+    document.addEventListener("click", (e) => { if (!fab.contains(e.target)) panel.classList.remove("open"); });
+    document.addEventListener("keydown", (e) => { if (e.key === "Escape") panel.classList.remove("open"); });
   };
 
   if (document.readyState === "loading") {
