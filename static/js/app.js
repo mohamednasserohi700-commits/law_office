@@ -4,7 +4,9 @@
   const sidebarToggle = document.getElementById("sidebar-toggle");
   const SIDEBAR_KEY = "law-sidebar-collapsed";
 
-  root.setAttribute("data-theme", localStorage.getItem("law-theme") || "saas");
+  // Force saas as permanent default — clear old dark preference
+  try { const saved = localStorage.getItem("law-theme"); if (!saved || saved === "dark") { localStorage.setItem("law-theme","saas"); } } catch(_){}
+  root.setAttribute("data-theme", (function(){ try { return localStorage.getItem("law-theme") || "saas"; } catch(_){ return "saas"; } })());
   try {
     // legacy key removed
   } catch (_err) {}
