@@ -2239,3 +2239,183 @@ html[data-theme="emerald"] .notif-dot { background: rgba(248,113,113,0.90); }
 .theme-swatch-dark    { background: linear-gradient(135deg, #0C1220, #c9a54c); }
 .theme-swatch-fiori   { background: linear-gradient(135deg, #16325C, #0A6ED1); }
 .theme-swatch-emerald { background: linear-gradient(135deg, #060F1C, #10B981); }
+
+/* ═══════════════════════════════════════════════════════════════════
+   TOPBAR COMPLETE FIX — ALL THEMES
+   Ensures topbar text, buttons, icons are always readable
+   ═══════════════════════════════════════════════════════════════════ */
+
+/* ── DARK (default) topbar ── */
+html[data-theme="dark"] .topbar-float,
+.topbar-float {
+  background: rgba(14,21,38,0.78);
+  border: 1px solid rgba(255,255,255,0.10);
+  box-shadow: 0 0 0 1px rgba(201,165,76,0.07) inset, 0 24px 70px rgba(0,0,0,0.55);
+}
+html[data-theme="dark"] .topbar-float .brand-name,
+.topbar-float .brand-name { color: #E5ECFF; }
+html[data-theme="dark"] .topbar-float .brand-sub,
+.topbar-float .brand-sub  { color: #9EB0D6; }
+
+html[data-theme="dark"] .topbar-float .btn-secondary,
+.topbar-float .btn-secondary {
+  color: #E5ECFF;
+  background: rgba(255,255,255,0.07);
+  border-color: rgba(255,255,255,0.14);
+}
+html[data-theme="dark"] .topbar-float .btn-secondary:hover,
+.topbar-float .btn-secondary:hover {
+  background: rgba(255,255,255,0.12);
+  border-color: rgba(255,255,255,0.22);
+}
+html[data-theme="dark"] .topbar-float .btn-danger,
+.topbar-float .btn-danger {
+  color: #ffdbe2;
+  background: rgba(251,113,133,0.16);
+  border-color: rgba(251,113,133,0.45);
+}
+html[data-theme="dark"] .topbar-float .mini-chip,
+.topbar-float .mini-chip {
+  background: rgba(255,255,255,0.10);
+  border-color: rgba(255,255,255,0.14);
+  color: #E5ECFF;
+  font-size: 12px;
+  font-weight: 800;
+  padding: 4px 12px;
+}
+html[data-theme="dark"] .topbar-float .icon-btn,
+.topbar-float .icon-btn {
+  color: #E5ECFF;
+}
+
+/* ── FIORI topbar ── */
+html[data-theme="fiori"] .topbar-float {
+  background: #16325C;
+  border: 1px solid #1E3E72;
+  box-shadow: 0 4px 24px rgba(22,50,92,0.30);
+}
+html[data-theme="fiori"] .topbar-float .brand-name { color: #FFFFFF; }
+html[data-theme="fiori"] .topbar-float .brand-sub  { color: rgba(255,255,255,0.60); }
+
+html[data-theme="fiori"] .topbar-float .btn-secondary {
+  color: #FFFFFF;
+  background: rgba(255,255,255,0.10);
+  border-color: rgba(255,255,255,0.18);
+}
+html[data-theme="fiori"] .topbar-float .btn-secondary:hover {
+  background: rgba(255,255,255,0.18);
+  border-color: rgba(255,255,255,0.30);
+}
+html[data-theme="fiori"] .topbar-float .btn-danger {
+  color: #FFD0D0;
+  background: rgba(255,80,80,0.18);
+  border-color: rgba(255,120,120,0.40);
+}
+html[data-theme="fiori"] .topbar-float .btn-danger:hover {
+  background: rgba(255,80,80,0.28);
+  border-color: rgba(255,120,120,0.60);
+}
+html[data-theme="fiori"] .topbar-float .mini-chip {
+  background: rgba(255,255,255,0.12);
+  border-color: rgba(255,255,255,0.20);
+  color: #FFFFFF;
+  font-size: 12px;
+  font-weight: 800;
+  padding: 4px 12px;
+}
+html[data-theme="fiori"] .topbar-float .icon-btn { color: #FFFFFF; }
+html[data-theme="fiori"] .topbar-float .icon-btn:hover {
+  background: rgba(255,255,255,0.14);
+}
+html[data-theme="fiori"] .topbar-float .notif-dot {
+  background: #FF4444;
+  border-color: #16325C;
+}
+html[data-theme="fiori"] .brand-logo-chip-sm {
+  border-color: rgba(255,255,255,0.30);
+  box-shadow: 0 0 14px rgba(10,110,209,0.22);
+  background: rgba(255,255,255,0.12);
+}
+
+/* ── EMERALD topbar ── */
+html[data-theme="emerald"] .topbar-float {
+  background: rgba(6,15,28,0.88);
+  border: 1px solid rgba(16,185,129,0.22);
+  box-shadow: 0 0 0 1px rgba(16,185,129,0.07) inset, 0 24px 70px rgba(0,0,0,0.65);
+}
+html[data-theme="emerald"] .topbar-float .brand-name { color: #D1FAE5; }
+html[data-theme="emerald"] .topbar-float .brand-sub  { color: #6EE7B7; }
+
+html[data-theme="emerald"] .topbar-float .btn-secondary {
+  color: #A7F3D0;
+  background: rgba(16,185,129,0.10);
+  border-color: rgba(16,185,129,0.22);
+}
+html[data-theme="emerald"] .topbar-float .btn-secondary:hover {
+  background: rgba(16,185,129,0.18);
+  border-color: rgba(16,185,129,0.38);
+  color: #ECFDF5;
+}
+html[data-theme="emerald"] .topbar-float .btn-danger {
+  color: #FECACA;
+  background: rgba(248,113,113,0.14);
+  border-color: rgba(248,113,113,0.36);
+}
+html[data-theme="emerald"] .topbar-float .btn-danger:hover {
+  background: rgba(248,113,113,0.22);
+  border-color: rgba(248,113,113,0.55);
+}
+html[data-theme="emerald"] .topbar-float .mini-chip {
+  background: rgba(16,185,129,0.12);
+  border-color: rgba(16,185,129,0.25);
+  color: #A7F3D0;
+  font-size: 12px;
+  font-weight: 800;
+  padding: 4px 12px;
+}
+html[data-theme="emerald"] .topbar-float .icon-btn { color: #6EE7B7; }
+html[data-theme="emerald"] .topbar-float .icon-btn:hover {
+  background: rgba(16,185,129,0.14);
+  color: #D1FAE5;
+}
+html[data-theme="emerald"] .notif-dot {
+  border-color: #060F1C;
+}
+html[data-theme="emerald"] .brand-logo-chip-sm {
+  border-color: rgba(16,185,129,0.45);
+  box-shadow: 0 0 14px rgba(16,185,129,0.22);
+  background: rgba(6,15,28,0.90);
+}
+
+/* ── Sidebar brand chip fix (all themes) ── */
+html[data-theme="fiori"] .sidebar-modern .brand-logo-chip {
+  background: rgba(255,255,255,0.95);
+  border-color: rgba(10,110,209,0.35);
+  box-shadow: 0 0 16px rgba(10,110,209,0.15);
+}
+html[data-theme="fiori"] .sidebar-brand-title { color: #16325C; }
+html[data-theme="fiori"] .sidebar-brand-sub   { color: #4A6079; }
+
+/* ── Sidebar section label + items fix for fiori (white bg) ── */
+html[data-theme="fiori"] .sidebar-section-title { color: #4A6079; }
+html[data-theme="fiori"] .sidebar-item-modern .sidebar-label { color: inherit; }
+
+/* ── btn-primary inside topbar for dark/emerald ── */
+html[data-theme="dark"]    .topbar-float .btn-primary { color: #111827; }
+html[data-theme="emerald"] .topbar-float .btn-primary { color: #022C22; }
+html[data-theme="fiori"]   .topbar-float .btn-primary {
+  color: #FFFFFF;
+  background: linear-gradient(135deg, #0A6ED1, #0070F2);
+  border-color: #0860BB;
+  box-shadow: 0 4px 14px rgba(10,110,209,0.30);
+}
+
+/* ── Quick actions btn fix ── */
+html[data-theme="fiori"] .quick-actions {
+  color: #FFFFFF !important;
+  background: linear-gradient(135deg, #0A6ED1, #0070F2) !important;
+  border-color: #0860BB !important;
+}
+html[data-theme="emerald"] .quick-actions {
+  color: #022C22 !important;
+}
