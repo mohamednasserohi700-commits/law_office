@@ -4,104 +4,63 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>{% if title %}{{ title }} — {% endif %}{{ system_name or "Law Office Pro" }}</title>
-
-  <!-- ═══ INSTANT THEME APPLY — before paint ═══ -->
   <script>
     (function () {
       try {
-        var saved = localStorage.getItem("law-theme");
-        if (!saved || saved === "dark") {
-          saved = "saas";
-          localStorage.setItem("law-theme", "saas");
-        }
-        document.documentElement.setAttribute("data-theme", saved);
+        var saved = localStorage.getItem("law-theme"); if (!saved || saved === "dark") { saved = "saas"; localStorage.setItem("law-theme","saas"); }
       } catch (e) {
-        document.documentElement.setAttribute("data-theme", "saas");
+        // ignore
       }
+      document.documentElement.setAttribute("data-theme", saved || "saas");
     })();
   </script>
-
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&family=Great+Vibes&family=Reem+Kufi:wght@500;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="{{ url_for('static', filename='css/premium.css') }}">
 </head>
 <body class="ambient-backdrop">
-
   {% if session.get("user_id") %}
-
-  <!-- ══════════════════════════════════════════════
-       LAYOUT SHELL
-       data-theme drives everything via CSS
-  ═══════════════════════════════════════════════ -->
-  <div class="app-shell" id="app-shell">
-
-    <!-- ───────────────────────────────────────────
-         TOPBAR  (shape morphs per theme via CSS)
-    ─────────────────────────────────────────────── -->
-    <header class="topbar-float glass-panel" id="main-topbar">
-
-      <!-- LEFT: logo + brand + toggle -->
+  <div class="app-shell">
+    <header class="topbar-float glass-panel">
       <div class="topbar-left">
         <div class="brand-lockup">
-          <button id="sidebar-toggle" class="btn-secondary icon-btn topbar-toggle-btn" type="button"
-                  aria-label="طي/فتح الشريط الجانبي" title="طي/فتح الشريط الجانبي">
-            <span class="toggle-icon-bar"></span>
-            <span class="toggle-icon-bar"></span>
-            <span class="toggle-icon-bar"></span>
+          <button id="sidebar-toggle" class="btn-secondary icon-btn topbar-toggle-btn" type="button" aria-label="طي/فتح الشريط الجانبي" title="طي/فتح الشريط الجانبي">
+            ☰
           </button>
           <div class="brand-logo-chip brand-logo-chip-sm">
-            <img src="{{ url_for('brand_logo') }}" alt="شعار" class="brand-logo-img">
+            <img src="{{ url_for('brand_logo') }}" alt="Law Office Pro Logo" class="brand-logo-img">
           </div>
           <div class="brand-titles">
             <div class="brand-name">{{ system_name or "نظام إدارة مكتب المحاماة" }}</div>
             <div class="brand-sub">{{ topbar_tenant_line or (session.get("tenant_name", "شركة") ~ " · " ~ session.get("tenant_plan", "Basic")) }}</div>
           </div>
         </div>
-
-        <!-- SAAS/EMERALD: inline nav tabs inside topbar -->
-        <nav class="topbar-inline-nav" aria-label="التنقل السريع">
-          <a href="{{ url_for('dashboard') }}"
-             class="topbar-nav-item {% if request.path == '/dashboard' %}active{% endif %}">
-            <span>🏠</span> الرئيسية
-          </a>
-          <a href="{{ url_for('table_list', table='cases') }}"
-             class="topbar-nav-item {% if request.path.startswith('/table/cases') %}active{% endif %}">
-            <span>⚖️</span> القضايا
-          </a>
-          <a href="{{ url_for('table_list', table='sessions') }}"
-             class="topbar-nav-item {% if request.path.startswith('/table/sessions') %}active{% endif %}">
-            <span>📆</span> الجلسات
-          </a>
-          <a href="{{ url_for('table_list', table='clients') }}"
-             class="topbar-nav-item {% if request.path.startswith('/table/clients') %}active{% endif %}">
-            <span>👥</span> العملاء
-          </a>
-          <a href="{{ url_for('table_list', table='payments') }}"
-             class="topbar-nav-item {% if request.path.startswith('/table/payments') %}active{% endif %}">
-            <span>💳</span> المالية
-          </a>
-        </nav>
       </div>
 
-      <!-- RIGHT: actions -->
+
+        <!-- Inline nav for SaaS + Emerald themes -->
+        <nav class="topbar-inline-nav" aria-label="التنقل السريع">
+          <a href="{{ url_for('dashboard') }}" class="topbar-nav-item {% if request.path == '/dashboard' %}active{% endif %}"><span>🏠</span> الرئيسية</a>
+          <a href="{{ url_for('table_list', table='cases') }}" class="topbar-nav-item {% if request.path.startswith('/table/cases') %}active{% endif %}"><span>⚖️</span> القضايا</a>
+          <a href="{{ url_for('table_list', table='sessions') }}" class="topbar-nav-item {% if request.path.startswith('/table/sessions') %}active{% endif %}"><span>📆</span> الجلسات</a>
+          <a href="{{ url_for('table_list', table='clients') }}" class="topbar-nav-item {% if request.path.startswith('/table/clients') %}active{% endif %}"><span>👥</span> العملاء</a>
+          <a href="{{ url_for('table_list', table='payments') }}" class="topbar-nav-item {% if request.path.startswith('/table/payments') %}active{% endif %}"><span>💳</span> المالية</a>
+        </nav>
       <div class="topbar-right">
-        <a href="{{ url_for('notifications') }}" class="btn-secondary icon-btn topbar-action-btn"
-           aria-label="الإشعارات" title="الإشعارات">
+        <a href="{{ url_for('notifications') }}" class="btn-secondary icon-btn topbar-action-btn" aria-label="الإشعارات">
           🔔
           {% if notif_count and notif_count > 0 %}
           <span class="notif-dot">{{ notif_count }}</span>
           {% endif %}
         </a>
-
-        <!-- Search pill — visible on saas -->
+        <!-- Search pill -->
         <button class="topbar-search-pill" type="button" aria-label="بحث" id="topbar-search-btn">
           <span class="topbar-search-icon">🔍</span>
           <span class="topbar-search-text">بحث سريع...</span>
           <kbd class="topbar-search-kbd">K</kbd>
         </button>
-
-        <span class="mini-chip pill topbar-user-chip">{{ session.get("username") }}</span>
+                <span class="mini-chip pill topbar-user-chip">{{ session.get("username") }}</span>
         <button id="theme-toggle" class="btn-secondary icon-btn hidden" type="button" aria-label="تبديل المظهر">
           <span id="theme-toggle-icon">🌙</span>
         </button>
@@ -109,20 +68,11 @@
       </div>
     </header>
 
-    <!-- ───────────────────────────────────────────
-         SIDEBAR
-         Shape morphs per theme:
-         saas  → compact icon+label rail, white bg, left-border active
-         dark  → glass floating panel, gold glow active
-         emerald → hidden (nav is in topbar)
-    ─────────────────────────────────────────────── -->
-    <aside class="sidebar-modern glass-panel" id="main-sidebar" aria-label="القائمة الجانبية">
-
-      <!-- Sidebar head (dark theme only shows this prominently) -->
+    <aside class="sidebar-modern glass-panel" aria-label="القائمة الجانبية">
       <div class="sidebar-head">
         <div class="sidebar-brand" data-tooltip="{{ system_name or 'Law Office Pro' }}">
           <div class="brand-logo-chip">
-            <img src="{{ url_for('brand_logo') }}" alt="شعار" class="brand-logo-img">
+            <img src="{{ url_for('brand_logo') }}" alt="Law Office Pro Logo" class="brand-logo-img">
           </div>
           <div class="sidebar-brand-text">
             <div class="sidebar-brand-title">{{ system_name or "Law Office Pro" }}</div>
@@ -132,18 +82,13 @@
       </div>
 
       <nav class="sidebar-nav" aria-label="التنقل">
-
         <div class="sidebar-section">
           <div class="sidebar-section-title">اللوحة</div>
-          <a href="{{ url_for('dashboard') }}"
-             class="sidebar-item-modern {% if request.path == '/dashboard' %}active{% endif %}"
-             data-tooltip="الرئيسية">
+          <a href="{{ url_for('dashboard') }}" class="sidebar-item-modern {% if request.path == '/dashboard' %}active{% endif %}" data-tooltip="الرئيسية">
             <span class="sidebar-icon">🏠</span>
             <span class="sidebar-label">الرئيسية</span>
           </a>
-          <a href="{{ url_for('notifications') }}"
-             class="sidebar-item-modern {% if request.path.startswith('/notifications') %}active{% endif %}"
-             data-tooltip="التنبيهات">
+          <a href="{{ url_for('notifications') }}" class="sidebar-item-modern {% if request.path.startswith('/notifications') %}active{% endif %}" data-tooltip="التنبيهات">
             <span class="sidebar-icon">🔔</span>
             <span class="sidebar-label">التنبيهات</span>
             {% if notif_count and notif_count > 0 %}
@@ -154,21 +99,15 @@
 
         <div class="sidebar-section">
           <div class="sidebar-section-title">القضايا</div>
-          <a href="{{ url_for('table_list', table='cases') }}"
-             class="sidebar-item-modern {% if request.path.startswith('/table/cases') %}active{% endif %}"
-             data-tooltip="القضايا">
+          <a href="{{ url_for('table_list', table='cases') }}" class="sidebar-item-modern {% if request.path.startswith('/table/cases') %}active{% endif %}" data-tooltip="القضايا">
             <span class="sidebar-icon">⚖️</span>
             <span class="sidebar-label">القضايا</span>
           </a>
-          <a href="{{ url_for('table_list', table='sessions') }}"
-             class="sidebar-item-modern {% if request.path.startswith('/table/sessions') %}active{% endif %}"
-             data-tooltip="الجلسات">
+          <a href="{{ url_for('table_list', table='sessions') }}" class="sidebar-item-modern {% if request.path.startswith('/table/sessions') %}active{% endif %}" data-tooltip="الجلسات">
             <span class="sidebar-icon">📆</span>
             <span class="sidebar-label">الجلسات</span>
           </a>
-          <a href="{{ url_for('table_list', table='documents') }}"
-             class="sidebar-item-modern {% if request.path.startswith('/table/documents') %}active{% endif %}"
-             data-tooltip="المستندات">
+          <a href="{{ url_for('table_list', table='documents') }}" class="sidebar-item-modern {% if request.path.startswith('/table/documents') %}active{% endif %}" data-tooltip="المستندات">
             <span class="sidebar-icon">🗂️</span>
             <span class="sidebar-label">المستندات</span>
           </a>
@@ -176,21 +115,15 @@
 
         <div class="sidebar-section">
           <div class="sidebar-section-title">العملاء والعقود</div>
-          <a href="{{ url_for('table_list', table='clients') }}"
-             class="sidebar-item-modern {% if request.path.startswith('/table/clients') %}active{% endif %}"
-             data-tooltip="العملاء">
+          <a href="{{ url_for('table_list', table='clients') }}" class="sidebar-item-modern {% if request.path.startswith('/table/clients') %}active{% endif %}" data-tooltip="العملاء">
             <span class="sidebar-icon">👥</span>
             <span class="sidebar-label">العملاء</span>
           </a>
-          <a href="{{ url_for('table_list', table='contracts') }}"
-             class="sidebar-item-modern {% if request.path.startswith('/table/contracts') %}active{% endif %}"
-             data-tooltip="العقود">
+          <a href="{{ url_for('table_list', table='contracts') }}" class="sidebar-item-modern {% if request.path.startswith('/table/contracts') %}active{% endif %}" data-tooltip="العقود">
             <span class="sidebar-icon">📜</span>
             <span class="sidebar-label">العقود</span>
           </a>
-          <a href="{{ url_for('table_list', table='tasks') }}"
-             class="sidebar-item-modern {% if request.path.startswith('/table/tasks') %}active{% endif %}"
-             data-tooltip="المهام">
+          <a href="{{ url_for('table_list', table='tasks') }}" class="sidebar-item-modern {% if request.path.startswith('/table/tasks') %}active{% endif %}" data-tooltip="المهام">
             <span class="sidebar-icon">✅</span>
             <span class="sidebar-label">المهام</span>
           </a>
@@ -198,64 +131,50 @@
 
         <div class="sidebar-section">
           <div class="sidebar-section-title">المالية</div>
-          <a href="{{ url_for('table_list', table='payments') }}"
-             class="sidebar-item-modern {% if request.path.startswith('/table/payments') %}active{% endif %}"
-             data-tooltip="المدفوعات">
+          <a href="{{ url_for('table_list', table='payments') }}" class="sidebar-item-modern {% if request.path.startswith('/table/payments') %}active{% endif %}" data-tooltip="المدفوعات">
             <span class="sidebar-icon">💳</span>
             <span class="sidebar-label">المدفوعات</span>
           </a>
-          <a href="{{ url_for('table_list', table='expenses') }}"
-             class="sidebar-item-modern {% if request.path.startswith('/table/expenses') %}active{% endif %}"
-             data-tooltip="المصروفات">
+          <a href="{{ url_for('table_list', table='expenses') }}" class="sidebar-item-modern {% if request.path.startswith('/table/expenses') %}active{% endif %}" data-tooltip="المصروفات">
             <span class="sidebar-icon">📉</span>
             <span class="sidebar-label">المصروفات</span>
           </a>
-          <a href="{{ url_for('billing') }}"
-             class="sidebar-item-modern {% if request.path.startswith('/billing') %}active{% endif %}"
-             data-tooltip="الفوترة">
+          <a href="{{ url_for('billing') }}" class="sidebar-item-modern {% if request.path.startswith('/billing') %}active{% endif %}" data-tooltip="الفوترة">
             <span class="sidebar-icon">🧾</span>
             <span class="sidebar-label">الفوترة</span>
           </a>
         </div>
 
-        <div class="sidebar-section sidebar-section-bottom">
+        <div class="sidebar-section">
           <div class="sidebar-section-title">الإعدادات</div>
           {% if can_manage_system %}
-          <a href="{{ url_for('settings_system') }}"
-             class="sidebar-item-modern {% if request.path.startswith('/settings/system') %}active{% endif %}"
-             data-tooltip="إعدادات النظام">
+          <a href="{{ url_for('settings_system') }}" class="sidebar-item-modern {% if request.path.startswith('/settings/system') %}active{% endif %}" data-tooltip="إعدادات النظام">
             <span class="sidebar-icon">⚙️</span>
             <span class="sidebar-label">إعدادات النظام</span>
           </a>
           {% endif %}
-          <a href="{{ url_for('table_list', table='users') }}"
-             class="sidebar-item-modern {% if request.path.startswith('/table/users') %}active{% endif %}"
-             data-tooltip="المستخدمون">
+          <a href="{{ url_for('table_list', table='users') }}" class="sidebar-item-modern {% if request.path.startswith('/table/users') %}active{% endif %}" data-tooltip="المستخدمون">
             <span class="sidebar-icon">🛡️</span>
             <span class="sidebar-label">المستخدمون</span>
           </a>
           {% if can_view_connected %}
-          <a href="{{ url_for('connected_users') }}"
-             class="sidebar-item-modern {% if request.path.startswith('/connected-users') %}active{% endif %}"
-             data-tooltip="المتصلون">
+          <a href="{{ url_for('connected_users') }}" class="sidebar-item-modern {% if request.path.startswith('/connected-users') %}active{% endif %}" data-tooltip="المتصلون">
             <span class="sidebar-icon">🟢</span>
             <span class="sidebar-label">المتصلون</span>
           </a>
           {% endif %}
-          <a href="{{ url_for('about') }}"
-             class="sidebar-item-modern {% if request.path.startswith('/about') %}active{% endif %}"
-             data-tooltip="حول البرنامج">
+        </div>
+
+        <div class="sidebar-section sidebar-section-bottom">
+          <div class="sidebar-section-title">النظام</div>
+          <a href="{{ url_for('about') }}" class="sidebar-item-modern {% if request.path.startswith('/about') %}active{% endif %}" data-tooltip="حول البرنامج">
             <span class="sidebar-icon">ℹ️</span>
             <span class="sidebar-label">حول البرنامج</span>
           </a>
         </div>
-
       </nav>
     </aside>
 
-    <!-- ───────────────────────────────────────────
-         CONTENT
-    ─────────────────────────────────────────────── -->
     <div class="content-shell">
       <div id="smart-toast-stack" class="smart-toast-stack" aria-live="polite"></div>
       {% with msgs = get_flashed_messages(with_categories=true) %}
@@ -267,15 +186,10 @@
         {% block content %}{% endblock %}
       </main>
     </div>
-
-  </div><!-- /app-shell -->
-
-  <!-- ═══ QUICK ACTIONS FAB ═══ -->
-  <button id="floating-quick-actions" class="quick-actions" type="button">
-    <span class="quick-actions-icon">⚡</span>
-    <span class="quick-actions-label">إجراءات سريعة</span>
+  </div>
+  <button id="floating-quick-actions" class="quick-actions btn-primary" type="button">
+    إجراءات سريعة
   </button>
-
   <div id="quick-actions-panel" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/55 p-4">
     <div class="card-base glass-panel w-full max-w-xl p-5">
       <div class="mb-4 flex items-center justify-between">
@@ -290,17 +204,12 @@
       </div>
     </div>
   </div>
-
-  <!-- Sidebar fly-tooltip -->
-  <div id="sidebar-flytip" class="sidebar-flytip" role="tooltip" aria-hidden="true"></div>
-
   {% else %}
-  <!-- ═══ LOGGED OUT ═══ -->
   <main class="mx-auto w-full max-w-7xl px-4 pb-10 pt-10 md:px-8">
-    {% block content %}{% endblock %}
+    {{ self.content() }}
   </main>
   {% endif %}
-
+  <div id="sidebar-flytip" class="sidebar-flytip" role="tooltip" aria-hidden="true"></div>
   <script src="{{ url_for('static', filename='js/app.js') }}" defer></script>
   {% block scripts %}{% endblock %}
 </body>
