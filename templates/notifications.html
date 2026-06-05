@@ -1,82 +1,269 @@
 {% extends "base.html" %}
 {% block content %}
-<section class="mb-6 card-base glass-panel p-4">
-  <h1 class="text-2xl font-extrabold text-white">🔔 مركز التنبيهات الذكي</h1>
-  <p class="mt-1 text-sm text-slate-300">مهام وجلسات ونشاط النظام — مرتبطة بملفات العملاء والقضايا.</p>
-  <div class="mt-3 flex flex-wrap gap-2">
-    <span class="status-pill status-pending">{{ smart_counts.tasks_open }} مهمة مفتوحة</span>
-    <span class="status-pill status-active">{{ smart_counts.sessions_today }} جلسة اليوم</span>
-    <span class="status-pill status-online">{{ smart_counts.sessions_upcoming }} جلسة قادمة</span>
-  </div>
-</section>
 
-<section class="grid grid-cols-1 gap-4 xl:grid-cols-2">
-  <article class="card-base glass-panel p-4">
-    <div class="mb-3 flex items-center justify-between">
-      <h2 class="text-base font-bold text-white">مهام تحتاج متابعة</h2>
-      <a href="{{ url_for('table_list', table='tasks') }}" class="smart-link text-xs">عرض الكل</a>
-    </div>
-    <div class="space-y-2">
-      {% for t in tasks %}
-      <div class="smart-alert-card">
-        <div class="flex items-center justify-between gap-2">
-          <p class="text-sm font-semibold text-slate-100">{{ t["title"] }}</p>
-          <span class="text-[11px] text-slate-300">{{ t["due_date"] or "بدون موعد" }}</span>
-        </div>
-        <p class="mt-1 text-xs text-slate-300">الأولوية: {{ t["priority"] or "-" }} · {{ t["status"] }}</p>
-        <a href="{{ url_for('table_edit', table='tasks', row_id=t['id']) }}" class="smart-link text-xs">فتح المهمة ←</a>
-      </div>
-      {% else %}
-      <p class="text-sm text-slate-300">لا توجد مهام مفتوحة.</p>
-      {% endfor %}
-    </div>
-  </article>
+<div class="smart-form-page">
 
-  <article class="card-base glass-panel p-4">
-    <div class="mb-3 flex items-center justify-between">
-      <h2 class="text-base font-bold text-white">جلسات اليوم والقادمة</h2>
-      <a href="{{ url_for('table_list', table='sessions') }}" class="smart-link text-xs">عرض الكل</a>
-    </div>
-    <div class="space-y-2">
-      {% for s in session_rows %}
-      <div class="smart-alert-card {% if s['session_date'] == '' %} {% endif %}">
-        <div class="flex items-center justify-between gap-2">
-          <p class="text-sm font-semibold text-slate-100">
-            {% if s['case_num'] %}{{ s['case_num'] }}{% else %}جلسة #{{ s['id'] }}{% endif %}
-          </p>
-          <span class="text-[11px] text-amber-200">{{ s['session_date'] or "—" }} {{ s['session_time'] or "" }}</span>
-        </div>
-        <p class="mt-1 text-xs text-slate-300">{{ s['case_subject'] or "" }} · {{ s['court'] or "" }}</p>
-        <div class="mt-2 flex flex-wrap gap-2">
-          <a href="{{ url_for('table_edit', table='sessions', row_id=s['id']) }}" class="smart-link text-xs">تعديل الجلسة</a>
-          {% if s['case_ref_id'] %}
-          <a href="{{ url_for('table_edit', table='cases', row_id=s['case_ref_id']) }}" class="smart-link text-xs">فتح القضية</a>
-          {% endif %}
-        </div>
+  <!-- ── HERO ── -->
+  <div class="hero-header glass-panel card-base p-5 mb-4">
+    <div class="flex flex-wrap items-center justify-between gap-3">
+      <div>
+        <p class="smart-form-kicker">مركز التنبيهات</p>
+        <h1 class="text-2xl font-extrabold text-white">🔔 التنبيهات والتذكيرات</h1>
+        <p class="mt-1 text-sm text-slate-300">
+          تنبيهات الجلسات القادمة · المهام المتأخرة · الفواتير · الأنشطة الأخيرة
+        </p>
       </div>
-      {% else %}
-      <p class="text-sm text-slate-300">لا توجد جلسات قادمة مسجّلة.</p>
-      {% endfor %}
+      <div class="flex gap-2 flex-wrap">
+        <form method="post" action="/api/notifications/read-all">
+          <button type="submit" class="btn-secondary px-4 py-2 text-sm font-semibold">
+            ✅ تعليم الكل كمقروء
+          </button>
+        </form>
+        <span class="mini-chip pill">
+          {{ smart_counts.total }} تنبيه نشط
+        </span>
+      </div>
     </div>
-  </article>
-</section>
+  </div>
 
-<section class="mt-4 card-base glass-panel p-4">
-  <div class="mb-3 flex items-center justify-between">
-    <h2 class="text-base font-bold text-white">آخر النشاطات</h2>
-  </div>
-  <div class="space-y-2">
-    {% for l in logs %}
-    <div class="smart-alert-card">
-      <div class="flex items-center justify-between gap-2">
-        <p class="text-sm font-semibold text-slate-100">{{ l["log_type"] or "سجل" }}</p>
-        <span class="text-[11px] text-slate-300">{{ l["created_at"] }}</span>
-      </div>
-      <p class="mt-1 text-xs text-slate-300">{{ l["detail"] or "-" }}</p>
+  <!-- ── STATS ROW ── -->
+  <div class="grid grid-cols-1 gap-4 mb-6" style="grid-template-columns: repeat(auto-fit,minmax(180px,1fr))">
+    <div class="card-base glass-panel p-4">
+      <div class="text-xs font-bold text-slate-300 mb-2">جلسات اليوم</div>
+      <div class="text-3xl font-extrabold text-white">{{ smart_counts.sessions_today }}</div>
+      <div class="text-xs text-slate-300 mt-1">جلسات لم تُسجَّل نتيجتها</div>
     </div>
-    {% else %}
-    <p class="text-sm text-slate-300">لا توجد نشاطات حديثة.</p>
-    {% endfor %}
+    <div class="card-base glass-panel p-4">
+      <div class="text-xs font-bold text-slate-300 mb-2">جلسات خلال 3 أيام</div>
+      <div class="text-3xl font-extrabold" style="color:var(--warning)">{{ smart_counts.sessions_upcoming }}</div>
+      <div class="text-xs text-slate-300 mt-1">تحتاج تحضيراً مسبقاً</div>
+    </div>
+    <div class="card-base glass-panel p-4">
+      <div class="text-xs font-bold text-slate-300 mb-2">مهام متأخرة</div>
+      <div class="text-3xl font-extrabold" style="color:var(--danger)">{{ smart_counts.tasks_overdue or 0 }}</div>
+      <div class="text-xs text-slate-300 mt-1">تجاوزت تاريخ الاستحقاق</div>
+    </div>
+    <div class="card-base glass-panel p-4">
+      <div class="text-xs font-bold text-slate-300 mb-2">فواتير متأخرة</div>
+      <div class="text-3xl font-extrabold" style="color:var(--danger)">{{ smart_counts.invoices_overdue or 0 }}</div>
+      <div class="text-xs text-slate-300 mt-1">لم تُسدَّد في موعدها</div>
+    </div>
+    <div class="card-base glass-panel p-4">
+      <div class="text-xs font-bold text-slate-300 mb-2">مهام مفتوحة</div>
+      <div class="text-3xl font-extrabold text-white">{{ smart_counts.tasks_open }}</div>
+      <div class="text-xs text-slate-300 mt-1">إجمالي المهام غير المنجزة</div>
+    </div>
   </div>
-</section>
+
+  <div class="grid grid-cols-1 gap-4" style="grid-template-columns: 1fr 1fr">
+
+    <!-- ── SMART NOTIFICATIONS ── -->
+    <div>
+      <div class="card-base glass-panel p-4 mb-4">
+        <div class="flex items-center justify-between mb-4">
+          <h2 class="text-sm font-extrabold text-slate-100">🤖 التنبيهات الذكية</h2>
+          <span class="mini-chip">{{ smart_notifs | length }} تنبيه</span>
+        </div>
+
+        {% if smart_notifs %}
+        <div class="space-y-2" id="smart-notif-list">
+          {% for n in smart_notifs %}
+          <div class="notif-item notif-{{ n.notif_type }}{% if n.is_read %} notif-read{% endif %}"
+               data-id="{{ n.id }}" id="notif-{{ n.id }}">
+            <div class="notif-icon">
+              {% if n.notif_type == 'warning' %}⚠️
+              {% elif n.notif_type == 'danger' %}🚨
+              {% elif n.notif_type == 'success' %}✅
+              {% else %}ℹ️{% endif %}
+            </div>
+            <div class="notif-content">
+              <div class="notif-title">{{ n.title }}</div>
+              {% if n.body %}<div class="notif-body">{{ n.body }}</div>{% endif %}
+              <div class="notif-meta">{{ n.created_at[:16] if n.created_at else '' }}</div>
+            </div>
+            {% if not n.is_read %}
+            <button class="notif-read-btn btn-soft px-2 py-1 text-xs"
+                    onclick="markRead({{ n.id }})">قراءة</button>
+            {% else %}
+            <span class="notif-read-badge">✓</span>
+            {% endif %}
+          </div>
+          {% endfor %}
+        </div>
+        {% else %}
+        <div class="rounded-xl border border-white/10 bg-white/5 px-3 py-6 text-center text-sm text-slate-300">
+          لا توجد تنبيهات حالياً — النظام يراقب الجلسات والمهام والفواتير تلقائياً.
+        </div>
+        {% endif %}
+      </div>
+
+      <!-- ── UPCOMING SESSIONS ── -->
+      <div class="card-base glass-panel p-4">
+        <div class="flex items-center justify-between mb-4">
+          <h2 class="text-sm font-extrabold text-slate-100">📆 الجلسات القادمة</h2>
+          <a href="{{ url_for('table_list', table='sessions') }}" class="btn-soft px-3 py-1 text-xs font-semibold">إدارة</a>
+        </div>
+        {% if session_rows %}
+        <ul class="space-y-2">
+          {% for s in session_rows %}
+          <li class="flex items-center justify-between rounded-xl border border-white/10 bg-white/5 px-3 py-2 hover:bg-white/10 transition-all">
+            <div>
+              <span class="text-sm font-semibold text-slate-100">{{ s.case_num or "قضية" }} — {{ s.case_subject or "—" }}</span>
+              {% if s.court %}<span class="text-xs text-slate-300 block">{{ s.court }}</span>{% endif %}
+            </div>
+            <div class="text-left">
+              <span class="text-xs font-bold" style="color:var(--warning)">{{ s.session_date }}</span>
+              {% if s.session_time %}<span class="text-xs text-slate-300 block">{{ s.session_time }}</span>{% endif %}
+            </div>
+          </li>
+          {% endfor %}
+        </ul>
+        {% else %}
+        <div class="rounded-xl border border-white/10 bg-white/5 px-3 py-4 text-sm text-slate-300 text-center">
+          لا توجد جلسات قادمة.
+        </div>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- ── RIGHT COLUMN ── -->
+    <div>
+      <!-- ── OPEN TASKS ── -->
+      <div class="card-base glass-panel p-4 mb-4">
+        <div class="flex items-center justify-between mb-4">
+          <h2 class="text-sm font-extrabold text-slate-100">✅ المهام المفتوحة</h2>
+          <a href="{{ url_for('table_list', table='tasks') }}" class="btn-soft px-3 py-1 text-xs font-semibold">عرض الكل</a>
+        </div>
+        {% if tasks %}
+        <div class="space-y-2">
+          {% for t in tasks %}
+          <div class="flex items-center justify-between rounded-xl border border-white/10 bg-white/5 px-3 py-2 hover:bg-white/10 transition-all">
+            <div class="flex items-center gap-2">
+              <span class="task-priority-dot priority-{{ t.priority or 'متوسطة' }}"></span>
+              <div>
+                <span class="text-sm font-semibold text-slate-100">{{ t.title }}</span>
+                {% if t.due_date %}
+                <span class="text-xs block {% if t.due_date < now_date %}text-rose-300{% else %}text-slate-300{% endif %}">
+                  الاستحقاق: {{ t.due_date }}
+                  {% if t.due_date < now_date %} ⚠ متأخرة{% endif %}
+                </span>
+                {% endif %}
+              </div>
+            </div>
+            <span class="status-pill status-{{ 'pending' if t.status == 'pending' else 'open' }} text-xs">
+              {{ t.status }}
+            </span>
+          </div>
+          {% endfor %}
+        </div>
+        {% else %}
+        <div class="rounded-xl border border-white/10 bg-white/5 px-3 py-4 text-sm text-slate-300 text-center">
+          لا توجد مهام مفتوحة — أحسنت!
+        </div>
+        {% endif %}
+      </div>
+
+      <!-- ── ACTIVITY LOG ── -->
+      <div class="card-base glass-panel p-4">
+        <div class="flex items-center justify-between mb-4">
+          <h2 class="text-sm font-extrabold text-slate-100">📋 سجل الأنشطة</h2>
+          <span class="text-xs text-slate-300">آخر 20 نشاط</span>
+        </div>
+        {% if logs %}
+        <ul class="space-y-2">
+          {% for lg in logs %}
+          <li class="flex items-start gap-3 rounded-xl border border-white/10 bg-white/5 px-3 py-2">
+            <span class="log-type-icon">
+              {% if 'دخول' in lg.log_type %}🔑
+              {% elif 'إضافة' in lg.log_type %}➕
+              {% elif 'تعديل' in lg.log_type %}✏️
+              {% elif 'حذف' in lg.log_type %}🗑️
+              {% elif 'فوترة' in lg.log_type %}🧾
+              {% else %}📌{% endif %}
+            </span>
+            <div class="flex-1 min-w-0">
+              <span class="text-sm font-semibold text-slate-100">{{ lg.log_type }}</span>
+              {% if lg.detail %}<span class="text-xs text-slate-300 block truncate">{{ lg.detail }}</span>{% endif %}
+            </div>
+            <span class="text-xs text-slate-300 whitespace-nowrap">{{ lg.created_at[:16] if lg.created_at else '' }}</span>
+          </li>
+          {% endfor %}
+        </ul>
+        {% else %}
+        <div class="rounded-xl border border-white/10 bg-white/5 px-3 py-4 text-sm text-slate-300 text-center">
+          لا توجد أنشطة مسجلة.
+        </div>
+        {% endif %}
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<style>
+/* ── Notification items ── */
+.notif-item {
+  display: flex; align-items: flex-start; gap: 10px;
+  padding: 10px 12px; border-radius: 12px; border: 1px solid;
+  transition: all .15s ease;
+}
+.notif-warning { border-color: rgba(245,158,11,0.35); background: rgba(245,158,11,0.08); }
+.notif-danger  { border-color: rgba(239,68,68,0.35);  background: rgba(239,68,68,0.08); }
+.notif-success { border-color: rgba(34,197,94,0.35);  background: rgba(34,197,94,0.08); }
+.notif-info    { border-color: rgba(59,130,246,0.30); background: rgba(59,130,246,0.06); }
+.notif-read    { opacity: .55; }
+.notif-icon    { font-size: 18px; flex-shrink: 0; margin-top: 1px; }
+.notif-content { flex: 1; min-width: 0; }
+.notif-title   { font-size: 13px; font-weight: 800; color: var(--text-main); line-height: 1.3; }
+.notif-body    { font-size: 11px; color: var(--text-sub); margin-top: 3px; }
+.notif-meta    { font-size: 10px; color: var(--text-sub); margin-top: 4px; opacity: .75; }
+.notif-read-btn { flex-shrink: 0; }
+.notif-read-badge { font-size: 12px; color: var(--success); flex-shrink: 0; }
+
+/* ── SaaS theme overrides ── */
+html[data-theme="saas"] .notif-warning { border-color: rgba(245,158,11,0.25); background: #FFFBEB; }
+html[data-theme="saas"] .notif-danger  { border-color: rgba(239,68,68,0.22);  background: #FFF5F5; }
+html[data-theme="saas"] .notif-success { border-color: rgba(34,197,94,0.22);  background: #F0FFF4; }
+html[data-theme="saas"] .notif-info    { border-color: rgba(15,76,154,0.18);  background: #EBF4FC; }
+html[data-theme="saas"] .notif-title   { color: #1B2B48; }
+html[data-theme="saas"] .notif-body    { color: #667085; }
+
+/* ── Priority dots ── */
+.task-priority-dot {
+  width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; margin-top: 5px;
+}
+.priority-عالية  { background: var(--danger); }
+.priority-متوسطة { background: var(--warning); }
+.priority-منخفضة { background: var(--success); }
+
+/* ── Log icons ── */
+.log-type-icon { font-size: 14px; flex-shrink: 0; margin-top: 2px; }
+</style>
+
+{% block scripts %}
+<script>
+const NOW_DATE = "{{ now_date if now_date is defined else '' }}";
+
+function markRead(id) {
+  fetch(`/api/notifications/read/${id}`, { method: 'POST' })
+    .then(() => {
+      const el = document.getElementById('notif-' + id);
+      if (el) {
+        el.classList.add('notif-read');
+        const btn = el.querySelector('.notif-read-btn');
+        if (btn) btn.outerHTML = '<span class="notif-read-badge">✓</span>';
+      }
+      // Update badge in topbar
+      const dot = document.querySelector('.notif-dot');
+      if (dot) {
+        const cur = parseInt(dot.textContent) || 0;
+        if (cur <= 1) dot.style.display = 'none';
+        else dot.textContent = cur - 1;
+      }
+    })
+    .catch(console.error);
+}
+</script>
+{% endblock %}
+
 {% endblock %}

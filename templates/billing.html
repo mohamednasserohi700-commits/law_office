@@ -1,64 +1,285 @@
 {% extends "base.html" %}
 {% block content %}
-<section class="mb-6 hero-header glass-panel card-base p-5">
-  <div class="flex items-center justify-between gap-3">
-    <div>
-      <h1 class="text-2xl font-extrabold text-white">الفوترة والاشتراك</h1>
-      <p class="mt-1 text-sm text-slate-300">إدارة الفواتير، تتبع المدفوعات، ومراقبة خطة الاشتراك.</p>
+
+<div class="smart-form-page">
+
+  <!-- ── HERO ── -->
+  <div class="hero-header glass-panel card-base p-5 mb-4">
+    <div class="flex flex-wrap items-center justify-between gap-3">
+      <div>
+        <p class="smart-form-kicker">الإدارة المالية</p>
+        <h1 class="text-2xl font-extrabold text-white">🧾 الفواتير والمدفوعات</h1>
+        <p class="mt-1 text-sm text-slate-300">إدارة فواتير الاشتراك ومتابعة المدفوعات والإيرادات</p>
+      </div>
+      <div class="flex gap-2">
+        <button onclick="document.getElementById('new-invoice-modal').classList.remove('hidden')"
+                class="btn-primary px-4 py-2 text-sm font-semibold">
+          ＋ فاتورة جديدة
+        </button>
+        <a href="{{ url_for('table_list', table='payments') }}" class="btn-secondary px-4 py-2 text-sm font-semibold">
+          سجل المدفوعات
+        </a>
+      </div>
     </div>
-    <span class="status-pill status-active">الخطة الحالية: {{ session.get("tenant_plan", "Basic") }}</span>
   </div>
-</section>
 
-<section class="grid grid-cols-1 gap-4 xl:grid-cols-2">
-  <article class="card-base glass-panel p-4">
-    <h2 class="mb-3 text-sm font-bold text-slate-100">الفواتير</h2>
-    <div class="overflow-x-auto">
-      <table class="table-premium min-w-[700px]">
-        <thead>
-          <tr>
-            <th>رقم الفاتورة</th><th>المبلغ</th><th>الحالة</th><th>الاستحقاق</th>
-          </tr>
-        </thead>
-        <tbody>
-          {% for inv in invoices %}
-          <tr>
-            <td>{{ inv["invoice_no"] }}</td>
-            <td>{{ inv["amount"] }}</td>
-            <td><span data-status>{{ inv["status"] }}</span></td>
-            <td>{{ inv["due_date"] or "-" }}</td>
-          </tr>
-          {% else %}
-          <tr><td colspan="4" class="text-center text-slate-300">لا توجد فواتير حالية.</td></tr>
-          {% endfor %}
-        </tbody>
-      </table>
+  <!-- ── STATS CARDS ── -->
+  {% if billing_stats is defined %}
+  <div class="grid grid-cols-1 gap-4 mb-6" style="grid-template-columns: repeat(auto-fit,minmax(160px,1fr))">
+    <div class="metric-card card-base glass-panel p-4">
+      <div class="text-xs font-bold text-slate-300 mb-2">إجمالي الفواتير</div>
+      <div class="text-3xl font-extrabold text-white">{{ "%.0f"|format(billing_stats.total_invoiced) }}</div>
+      <div class="text-xs text-slate-300 mt-1">ريال سعودي</div>
     </div>
-  </article>
+    <div class="metric-card card-base glass-panel p-4">
+      <div class="text-xs font-bold text-slate-300 mb-2">إجمالي المحصَّل</div>
+      <div class="text-3xl font-extrabold text-emerald-300">{{ "%.0f"|format(billing_stats.total_paid) }}</div>
+      <div class="text-xs text-slate-300 mt-1">ريال سعودي</div>
+    </div>
+    <div class="metric-card card-base glass-panel p-4">
+      <div class="text-xs font-bold text-slate-300 mb-2">المتبقي</div>
+      <div class="text-3xl font-extrabold text-amber-300">{{ "%.0f"|format(billing_stats.outstanding) }}</div>
+      <div class="text-xs text-slate-300 mt-1">ريال سعودي</div>
+    </div>
+    <div class="metric-card card-base glass-panel p-4">
+      <div class="text-xs font-bold text-slate-300 mb-2">فواتير معلقة</div>
+      <div class="text-3xl font-extrabold text-white">{{ billing_stats.pending_count }}</div>
+      <div class="text-xs text-slate-300 mt-1">بانتظار السداد</div>
+    </div>
+    <div class="metric-card card-base glass-panel p-4">
+      <div class="text-xs font-bold text-slate-300 mb-2">فواتير متأخرة</div>
+      <div class="text-3xl font-extrabold text-rose-300">{{ billing_stats.overdue_count }}</div>
+      <div class="text-xs text-slate-300 mt-1">تجاوزت تاريخ السداد</div>
+    </div>
+  </div>
+  {% endif %}
 
-  <article class="card-base glass-panel p-4">
-    <h2 class="mb-3 text-sm font-bold text-slate-100">سجل المدفوعات</h2>
-    <div class="overflow-x-auto">
-      <table class="table-premium min-w-[700px]">
-        <thead>
-          <tr>
-            <th>الفاتورة</th><th>المبلغ</th><th>الطريقة</th><th>التاريخ</th>
-          </tr>
-        </thead>
-        <tbody>
-          {% for p in payments %}
-          <tr>
-            <td>#{{ p["invoice_id"] or "-" }}</td>
-            <td>{{ p["amount"] }}</td>
-            <td>{{ p["method"] }}</td>
-            <td>{{ p["pay_date"] or p["created_at"] }}</td>
-          </tr>
-          {% else %}
-          <tr><td colspan="4" class="text-center text-slate-300">لا توجد عمليات دفع.</td></tr>
-          {% endfor %}
-        </tbody>
-      </table>
+  <div class="grid grid-cols-1 gap-4" style="grid-template-columns: 1fr 1fr">
+
+    <!-- ── INVOICES ── -->
+    <div class="card-base glass-panel p-4">
+      <div class="flex items-center justify-between mb-4">
+        <h2 class="text-sm font-extrabold text-slate-100">📋 قائمة الفواتير</h2>
+        <span class="mini-chip">{{ invoices | length }} فاتورة</span>
+      </div>
+
+      {% if invoices %}
+      <div class="table-wrap overflow-x-auto">
+        <table class="table-premium w-full text-sm">
+          <thead>
+            <tr>
+              <th>رقم الفاتورة</th>
+              <th>المبلغ</th>
+              <th>الحالة</th>
+              <th>الاستحقاق</th>
+              <th>إجراءات</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for inv in invoices %}
+            <tr class="{% if inv.status == 'pending' and inv.due_date and inv.due_date < today_str %}invoice-overdue{% endif %}">
+              <td class="font-bold">{{ inv.invoice_no }}</td>
+              <td class="font-bold">{{ "%.2f"|format(inv.amount) }} ر.س</td>
+              <td>
+                {% if inv.status == 'paid' %}
+                  <span class="status-pill status-active">مدفوعة ✓</span>
+                {% elif inv.status == 'pending' %}
+                  {% if inv.due_date and inv.due_date < today_str %}
+                    <span class="status-pill" style="background:rgba(239,68,68,0.15);color:var(--danger);border-color:rgba(239,68,68,0.30)">متأخرة ⚠</span>
+                  {% else %}
+                    <span class="status-pill status-pending">معلقة</span>
+                  {% endif %}
+                {% else %}
+                  <span class="status-pill status-closed">{{ inv.status }}</span>
+                {% endif %}
+              </td>
+              <td class="text-xs">{{ inv.due_date or '—' }}</td>
+              <td>
+                <div class="flex gap-1">
+                  {% if inv.status == 'pending' %}
+                  <button onclick="openPayModal({{ inv.id }}, '{{ inv.invoice_no }}', {{ inv.amount }})"
+                          class="btn-primary px-2 py-1 text-xs">تسجيل دفع</button>
+                  {% endif %}
+                  <form method="post" action="/billing/invoice/{{ inv.id }}/delete"
+                        onsubmit="return confirm('حذف الفاتورة {{ inv.invoice_no }}؟')">
+                    <button type="submit" class="btn-danger px-2 py-1 text-xs">حذف</button>
+                  </form>
+                </div>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% else %}
+      <div class="rounded-xl border border-white/10 bg-white/5 px-3 py-8 text-center">
+        <div class="text-2xl mb-2">🧾</div>
+        <p class="text-sm text-slate-300">لا توجد فواتير بعد.</p>
+        <button onclick="document.getElementById('new-invoice-modal').classList.remove('hidden')"
+                class="btn-primary px-4 py-2 text-sm font-semibold mt-3">
+          إنشاء أول فاتورة
+        </button>
+      </div>
+      {% endif %}
     </div>
-  </article>
-</section>
+
+    <!-- ── PAYMENTS ── -->
+    <div class="card-base glass-panel p-4">
+      <div class="flex items-center justify-between mb-4">
+        <h2 class="text-sm font-extrabold text-slate-100">💳 سجل المدفوعات</h2>
+        <span class="mini-chip">{{ (payments_rich or payments) | length }} دفعة</span>
+      </div>
+
+      {% set pay_list = payments_rich if payments_rich is defined and payments_rich else payments %}
+      {% if pay_list %}
+      <div class="space-y-2">
+        {% for p in pay_list %}
+        <div class="payment-row flex items-center justify-between rounded-xl border border-white/10 bg-white/5 px-3 py-2 hover:bg-white/10 transition-all">
+          <div>
+            {% if p.client_name is defined and p.client_name %}
+            <span class="text-sm font-bold text-slate-100">{{ p.client_name }}</span>
+            {% if p.case_num is defined and p.case_num %}
+            <span class="text-xs text-slate-300"> — {{ p.case_num }}</span>
+            {% endif %}
+            {% elif p.invoice_id %}
+            <span class="text-sm font-bold text-slate-100">فاتورة #{{ p.invoice_id }}</span>
+            {% endif %}
+            <span class="text-xs text-slate-300 block">{{ p.method or '—' }} · {{ p.pay_date or p.created_at[:10] }}</span>
+          </div>
+          <span class="text-emerald-300 font-extrabold text-sm">{{ "%.2f"|format(p.amount) }} ر.س</span>
+        </div>
+        {% endfor %}
+      </div>
+      {% else %}
+      <div class="rounded-xl border border-white/10 bg-white/5 px-3 py-8 text-center text-sm text-slate-300">
+        لا توجد مدفوعات مسجلة.
+      </div>
+      {% endif %}
+    </div>
+
+  </div>
+</div>
+
+<!-- ════════════════════════════════
+     NEW INVOICE MODAL
+════════════════════════════════ -->
+<div id="new-invoice-modal" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/55 p-4">
+  <div class="card-base glass-panel w-full max-w-md p-6">
+    <div class="flex items-center justify-between mb-5">
+      <h3 class="text-base font-extrabold">🧾 إنشاء فاتورة جديدة</h3>
+      <button onclick="document.getElementById('new-invoice-modal').classList.add('hidden')"
+              class="btn-secondary px-3 py-1 text-xs">إغلاق</button>
+    </div>
+    <form method="post" action="/billing/invoice/new">
+      <div class="grid grid-cols-1 gap-4">
+        <div>
+          <label class="smart-label">رقم الفاتورة <span class="smart-req">*</span></label>
+          <input type="text" name="invoice_no" class="input-base"
+                 placeholder="INV-2026-001" required
+                 value="INV-{{ now_year }}-{{ invoice_seq if invoice_seq is defined else '001' }}">
+        </div>
+        <div>
+          <label class="smart-label">المبلغ (ر.س) <span class="smart-req">*</span></label>
+          <input type="number" name="amount" class="input-base" placeholder="0.00"
+                 step="0.01" min="0" required>
+        </div>
+        <div>
+          <label class="smart-label">تاريخ الاستحقاق</label>
+          <input type="date" name="due_date" class="input-base">
+        </div>
+        <div>
+          <label class="smart-label">الحالة</label>
+          <select name="status" class="input-base">
+            <option value="pending">معلقة</option>
+            <option value="paid">مدفوعة</option>
+          </select>
+        </div>
+      </div>
+      <div class="flex gap-3 mt-5">
+        <button type="submit" class="btn-primary px-5 py-2 text-sm font-bold">حفظ الفاتورة</button>
+        <button type="button"
+                onclick="document.getElementById('new-invoice-modal').classList.add('hidden')"
+                class="btn-secondary px-4 py-2 text-sm">إلغاء</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ════════════════════════════════
+     PAY INVOICE MODAL
+════════════════════════════════ -->
+<div id="pay-invoice-modal" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/55 p-4">
+  <div class="card-base glass-panel w-full max-w-md p-6">
+    <div class="flex items-center justify-between mb-5">
+      <h3 class="text-base font-extrabold" id="pay-modal-title">💳 تسجيل دفعة</h3>
+      <button onclick="document.getElementById('pay-invoice-modal').classList.add('hidden')"
+              class="btn-secondary px-3 py-1 text-xs">إغلاق</button>
+    </div>
+    <form method="post" id="pay-invoice-form">
+      <div class="grid grid-cols-1 gap-4">
+        <div>
+          <label class="smart-label">المبلغ (ر.س) <span class="smart-req">*</span></label>
+          <input type="number" name="amount" id="pay-amount-input" class="input-base"
+                 step="0.01" min="0" required>
+        </div>
+        <div>
+          <label class="smart-label">طريقة الدفع</label>
+          <select name="method" class="input-base">
+            <option value="card">بطاقة ائتمان</option>
+            <option value="bank_transfer">تحويل بنكي</option>
+            <option value="cash">نقداً</option>
+            <option value="check">شيك</option>
+          </select>
+        </div>
+        <div>
+          <label class="smart-label">رقم المرجع</label>
+          <input type="text" name="reference" class="input-base" placeholder="اختياري">
+        </div>
+        <div>
+          <label class="smart-label">تاريخ الدفع</label>
+          <input type="date" name="pay_date" class="input-base" id="pay-date-input">
+        </div>
+      </div>
+      <div class="flex gap-3 mt-5">
+        <button type="submit" class="btn-primary px-5 py-2 text-sm font-bold">تأكيد الدفع</button>
+        <button type="button"
+                onclick="document.getElementById('pay-invoice-modal').classList.add('hidden')"
+                class="btn-secondary px-4 py-2 text-sm">إلغاء</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<style>
+.invoice-overdue td { background: rgba(239,68,68,0.04) !important; }
+html[data-theme="saas"] .invoice-overdue td { background: #FFF5F5 !important; }
+.payment-row { cursor: default; }
+</style>
+
+<script>
+// Set today's date
+const today = new Date().toISOString().split('T')[0];
+const payDateInput = document.getElementById('pay-date-input');
+if (payDateInput) payDateInput.value = today;
+
+function openPayModal(invId, invNo, amount) {
+  document.getElementById('pay-modal-title').textContent = '💳 تسجيل دفعة — ' + invNo;
+  document.getElementById('pay-invoice-form').action = '/billing/invoice/' + invId + '/pay';
+  document.getElementById('pay-amount-input').value = amount;
+  document.getElementById('pay-invoice-modal').classList.remove('hidden');
+  document.getElementById('pay-invoice-modal').classList.add('flex');
+}
+
+// Close modals on outside click
+['new-invoice-modal', 'pay-invoice-modal'].forEach(id => {
+  const el = document.getElementById(id);
+  if (el) el.addEventListener('click', e => {
+    if (e.target === el) {
+      el.classList.add('hidden');
+      el.classList.remove('flex');
+    }
+  });
+});
+</script>
+
 {% endblock %}
