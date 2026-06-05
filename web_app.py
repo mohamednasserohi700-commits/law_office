@@ -640,6 +640,17 @@ def init_db() -> None:
                 device_name TEXT DEFAULT '',
                 ip TEXT DEFAULT '127.0.0.1'
             );
+            CREATE TABLE IF NOT EXISTS smart_notifications (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                tenant_id INTEGER NOT NULL,
+                notif_type TEXT NOT NULL DEFAULT 'info',
+                title TEXT NOT NULL,
+                body TEXT DEFAULT '',
+                ref_table TEXT DEFAULT '',
+                ref_id INTEGER DEFAULT 0,
+                is_read INTEGER DEFAULT 0,
+                created_at TEXT DEFAULT CURRENT_TIMESTAMP
+            );
             """
         )
         docs_db.execute(
@@ -711,6 +722,128 @@ def init_db() -> None:
     finally:
         docs_db.close()
         db.close()
+
+
+def migrate_smart_notifications() -> None:
+    """Ensure smart_notifications table exists on older DBs."""
+    try:
+        db = sqlite3.connect(DB_PATH)
+        db.row_factory = sqlite3.Row
+        db.execute("""
+            CREATE TABLE IF NOT EXISTS smart_notifications (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                tenant_id INTEGER NOT NULL,
+                notif_type TEXT NOT NULL DEFAULT 'info',
+                title TEXT NOT NULL,
+                body TEXT DEFAULT '',
+                ref_table TEXT DEFAULT '',
+                ref_id INTEGER DEFAULT 0,
+                is_read INTEGER DEFAULT 0,
+                created_at TEXT DEFAULT CURRENT_TIMESTAMP
+            )
+        """)
+        db.commit()
+        db.close()
+    except Exception:
+        pass
+
+
+def push_notification(db, tid: int, notif_type: str, title: str, body: str = "",
+                      ref_table: str = "", ref_id: int = 0) -> None:
+    """Insert a smart notification — deduplicates within same day."""
+    today = datetime.now().strftime("%Y-%m-%d")
+    existing = db.execute(
+        """SELECT id FROM smart_notifications
+           WHERE tenant_id=? AND ref_table=? AND ref_id=? AND DATE(created_at)=?""",
+        (tid, ref_table, ref_id, today),
+    ).fetchone()
+    if existing:
+        return
+    db.execute(
+        """INSERT INTO smart_notifications(tenant_id,notif_type,title,body,ref_table,ref_id)
+           VALUES (?,?,?,?,?,?)""",
+        (tid, notif_type, title, body, ref_table, ref_id),
+    )
+    db.commit()
+
+
+def generate_auto_notifications(db, tid: int) -> None:
+    """
+    Called on each request to generate system notifications:
+    - Sessions within next 3 days
+    - Unpaid payments / overdue billing invoices
+    - Overdue tasks
+    """
+    today = datetime.now()
+    today_str = today.strftime("%Y-%m-%d")
+    soon_str = (today + timedelta(days=3)).strftime("%Y-%m-%d")
+
+    # Sessions in next 3 days
+    upcoming = db.execute(
+        """SELECT s.id, s.session_date, s.court, c.case_num, c.subject
+           FROM sessions s
+           LEFT JOIN cases c ON c.id = s.case_id AND c.tenant_id = s.tenant_id
+           WHERE s.tenant_id=? AND s.session_date BETWEEN ? AND ?
+             AND (s.result IS NULL OR s.result='')
+           ORDER BY s.session_date ASC""",
+        (tid, today_str, soon_str),
+    ).fetchall()
+    for row in upcoming:
+        delta = (datetime.strptime(row["session_date"], "%Y-%m-%d") - today).days
+        label = "اليوم" if delta == 0 else f"بعد {delta} يوم"
+        push_notification(
+            db, tid, "warning" if delta <= 1 else "info",
+            f"جلسة قادمة {label}: {row['case_num'] or 'قضية'} — {row['subject'] or ''}",
+            f"المحكمة: {row['court'] or '—'}  |  التاريخ: {row['session_date']}",
+            "sessions", row["id"],
+        )
+
+    # Overdue tasks (due_date passed, not done)
+    overdue_tasks = db.execute(
+        """SELECT id, title, due_date FROM tasks
+           WHERE tenant_id=? AND status!='done' AND due_date!='' AND due_date < ?
+           ORDER BY due_date ASC LIMIT 10""",
+        (tid, today_str),
+    ).fetchall()
+    for row in overdue_tasks:
+        push_notification(
+            db, tid, "danger",
+            f"مهمة متأخرة: {row['title']}",
+            f"كانت مستحقة في: {row['due_date']}",
+            "tasks", row["id"],
+        )
+
+    # Overdue billing invoices
+    overdue_inv = db.execute(
+        """SELECT id, invoice_no, amount, due_date FROM billing_invoices
+           WHERE tenant_id=? AND status='pending' AND due_date!='' AND due_date < ?
+           ORDER BY due_date ASC LIMIT 10""",
+        (tid, today_str),
+    ).fetchall()
+    for row in overdue_inv:
+        push_notification(
+            db, tid, "danger",
+            f"فاتورة متأخرة السداد: {row['invoice_no']}",
+            f"المبلغ: {row['amount']} ر.س  |  الاستحقاق: {row['due_date']}",
+            "billing_invoices", row["id"],
+        )
+
+    # Payments recorded today — notify for awareness
+    today_payments = db.execute(
+        """SELECT p.id, p.amount, p.method, cl.name AS client_name
+           FROM payments p
+           LEFT JOIN clients cl ON cl.id = p.client_id AND cl.tenant_id = p.tenant_id
+           WHERE p.tenant_id=? AND p.pay_date=?
+           ORDER BY p.id DESC LIMIT 5""",
+        (tid, today_str),
+    ).fetchall()
+    for row in today_payments:
+        push_notification(
+            db, tid, "success",
+            f"دفعة مسجلة اليوم: {row['client_name'] or 'عميل'} — {row['amount']} ر.س",
+            f"طريقة الدفع: {row['method']}",
+            "payments", row["id"],
+        )
 
 
 ONLINE_STALE_SECONDS = 90
@@ -1221,32 +1354,57 @@ def _linked_table_query(table: str, tid: int, q: str):
 
 def get_smart_alert_counts(db, tid: int) -> dict:
     today = datetime.now().strftime("%Y-%m-%d")
+    soon = (datetime.now() + timedelta(days=3)).strftime("%Y-%m-%d")
     tasks_open = int(
         db.execute("SELECT COUNT(*) c FROM tasks WHERE status!='done' AND tenant_id=?", (tid,)).fetchone()["c"]
     )
+    tasks_overdue = int(
+        db.execute(
+            "SELECT COUNT(*) c FROM tasks WHERE status!='done' AND tenant_id=? AND due_date!='' AND due_date<?",
+            (tid, today),
+        ).fetchone()["c"]
+    )
     sessions_today = int(
         db.execute(
-            """
-            SELECT COUNT(*) c FROM sessions
-            WHERE tenant_id=? AND session_date=? AND (result IS NULL OR result='')
-            """,
+            "SELECT COUNT(*) c FROM sessions WHERE tenant_id=? AND session_date=? AND (result IS NULL OR result='')",
             (tid, today),
         ).fetchone()["c"]
     )
     sessions_upcoming = int(
         db.execute(
-            """
-            SELECT COUNT(*) c FROM sessions
-            WHERE tenant_id=? AND session_date > ?
-            """,
-            (tid, today),
+            "SELECT COUNT(*) c FROM sessions WHERE tenant_id=? AND session_date > ? AND session_date <= ?",
+            (tid, today, soon),
         ).fetchone()["c"]
     )
+    invoices_overdue = 0
+    try:
+        invoices_overdue = int(
+            db.execute(
+                "SELECT COUNT(*) c FROM billing_invoices WHERE tenant_id=? AND status='pending' AND due_date!='' AND due_date<?",
+                (tid, today),
+            ).fetchone()["c"]
+        )
+    except Exception:
+        pass
+    unread_notifs = 0
+    try:
+        unread_notifs = int(
+            db.execute(
+                "SELECT COUNT(*) c FROM smart_notifications WHERE tenant_id=? AND is_read=0",
+                (tid,),
+            ).fetchone()["c"]
+        )
+    except Exception:
+        pass
+    total = sessions_today + tasks_overdue + invoices_overdue + sessions_upcoming
     return {
         "tasks_open": tasks_open,
+        "tasks_overdue": tasks_overdue,
         "sessions_today": sessions_today,
         "sessions_upcoming": sessions_upcoming,
-        "total": tasks_open + sessions_today,
+        "invoices_overdue": invoices_overdue,
+        "unread_notifs": unread_notifs,
+        "total": total,
     }
 
 
@@ -1265,11 +1423,16 @@ def register_hooks(app: Flask) -> None:
             )
         except Exception:
             notif_count = 0
-        smart_alerts = {"tasks_open": 0, "sessions_today": 0, "sessions_upcoming": 0, "total": 0}
+        smart_alerts = {"tasks_open": 0, "tasks_overdue": 0, "sessions_today": 0, "sessions_upcoming": 0, "invoices_overdue": 0, "unread_notifs": 0, "total": 0}
         try:
             tid_a = get_current_tenant_id()
             if tid_a:
-                smart_alerts = get_smart_alert_counts(get_db(), tid_a)
+                _db = get_db()
+                try:
+                    generate_auto_notifications(_db, tid_a)
+                except Exception:
+                    pass
+                smart_alerts = get_smart_alert_counts(_db, tid_a)
                 notif_count = max(notif_count, smart_alerts["total"])
         except Exception:
             pass
@@ -1282,10 +1445,15 @@ def register_hooks(app: Flask) -> None:
             ).fetchone()
         active_plan = (tenant_info["subscription_plan"] if tenant_info else "Basic") if tenant_info else "Basic"
         sys_settings = load_system_settings()
+        today_str = datetime.now().strftime("%Y-%m-%d")
+        now_year = datetime.now().year
         return {
             "module_labels": MODULE_LABELS,
             "field_labels": FIELD_LABELS,
             "notif_count": notif_count,
+            "today_str": today_str,
+            "now_year": now_year,
+            "now_date": today_str,
             "user_role": session.get("role", "user"),
             "permission_options": PERMISSION_OPTIONS,
             "can_view_connected": has_permission("connected_users_view"),
@@ -1371,6 +1539,34 @@ def register_routes(app: Flask) -> None:
     @app.get("/health")
     def health():
         return jsonify({"status": "ok", "data_dir": str(DATA_DIR)})
+
+    @app.post("/api/notifications/read/<int:notif_id>")
+    @login_required
+    def mark_notification_read(notif_id: int):
+        tid = get_current_tenant_id()
+        try:
+            get_db().execute(
+                "UPDATE smart_notifications SET is_read=1 WHERE id=? AND tenant_id=?",
+                (notif_id, tid),
+            )
+            get_db().commit()
+        except Exception:
+            pass
+        return jsonify({"ok": True})
+
+    @app.post("/api/notifications/read-all")
+    @login_required
+    def mark_all_notifications_read():
+        tid = get_current_tenant_id()
+        try:
+            get_db().execute(
+                "UPDATE smart_notifications SET is_read=1 WHERE tenant_id=?",
+                (tid,),
+            )
+            get_db().commit()
+        except Exception:
+            pass
+        return jsonify({"ok": True})
 
     @app.route("/")
     def root():
@@ -1552,12 +1748,26 @@ def register_routes(app: Flask) -> None:
             , (tid, today),
         ).fetchall()
         smart_counts = get_smart_alert_counts(db, tid)
+        # Load smart notifications
+        smart_notifs = []
+        try:
+            smart_notifs = db.execute(
+                """SELECT id, notif_type, title, body, ref_table, ref_id, is_read, created_at
+                   FROM smart_notifications
+                   WHERE tenant_id=?
+                   ORDER BY is_read ASC, id DESC
+                   LIMIT 60""",
+                (tid,),
+            ).fetchall()
+        except Exception:
+            pass
         return render_template(
             "notifications.html",
             tasks=task_rows,
             logs=log_rows,
             session_rows=session_rows,
             smart_counts=smart_counts,
+            smart_notifs=smart_notifs,
         )
 
     @app.get("/brand-logo.png")
@@ -1591,7 +1801,47 @@ def register_routes(app: Flask) -> None:
             """,
             (tid,),
         ).fetchall()
-        return render_template("billing.html", invoices=invoices, payments=payments)
+        # Stats for billing page
+        total_invoiced = sum(float(r["amount"] or 0) for r in invoices)
+        total_paid = sum(float(r["amount"] or 0) for r in payments)
+        pending_count = sum(1 for r in invoices if r["status"] == "pending")
+        overdue_count = 0
+        today_str = datetime.now().strftime("%Y-%m-%d")
+        overdue_count = sum(
+            1 for r in invoices
+            if r["status"] == "pending" and r["due_date"] and r["due_date"] < today_str
+        )
+        # Also pull payments with client/case info
+        payments_rich = []
+        try:
+            payments_rich = db.execute(
+                """SELECT p.id, p.amount, p.method, p.pay_date, p.reference, p.notes,
+                          cl.name AS client_name, ca.case_num
+                   FROM payments p
+                   LEFT JOIN clients cl ON cl.id=p.client_id AND cl.tenant_id=p.tenant_id
+                   LEFT JOIN cases ca ON ca.id=p.case_id AND ca.tenant_id=p.tenant_id
+                   WHERE p.tenant_id=?
+                   ORDER BY p.id DESC LIMIT 30""",
+                (tid,),
+            ).fetchall()
+        except Exception:
+            pass
+        billing_stats = {
+            "total_invoiced": total_invoiced,
+            "total_paid": total_paid,
+            "outstanding": total_invoiced - total_paid,
+            "pending_count": pending_count,
+            "overdue_count": overdue_count,
+        }
+        return render_template(
+            "billing.html",
+            invoices=invoices,
+            payments=payments,
+            payments_rich=payments_rich,
+            billing_stats=billing_stats,
+            today_str=datetime.now().strftime("%Y-%m-%d"),
+            now_year=datetime.now().year,
+        )
 
     @app.route("/settings/system", methods=["GET", "POST"])
     @login_required
@@ -1856,6 +2106,90 @@ def register_routes(app: Flask) -> None:
                 "items": [dict(r) for r in rows],
             }
         )
+
+    @app.route("/billing/invoice/new", methods=["GET", "POST"])
+    @login_required
+    def billing_invoice_new():
+        tid = get_current_tenant_id()
+        db = get_db()
+        if request.method == "POST":
+            invoice_no = request.form.get("invoice_no", "").strip()
+            amount = request.form.get("amount", "0").strip()
+            due_date = request.form.get("due_date", "").strip()
+            status = request.form.get("status", "pending").strip()
+            if not invoice_no or not amount:
+                flash("رقم الفاتورة والمبلغ مطلوبان", "warning")
+                return redirect(url_for("billing"))
+            try:
+                amount_f = float(amount)
+            except ValueError:
+                flash("المبلغ يجب أن يكون رقماً", "warning")
+                return redirect(url_for("billing"))
+            db.execute(
+                """INSERT INTO billing_invoices(tenant_id, invoice_no, amount, status, due_date)
+                   VALUES (?,?,?,?,?)""",
+                (tid, invoice_no, amount_f, status, due_date),
+            )
+            db.commit()
+            log_action("فوترة", f"إنشاء فاتورة {invoice_no} بمبلغ {amount_f} ر.س")
+            flash(f"تم إنشاء الفاتورة {invoice_no} بنجاح.", "success")
+            return redirect(url_for("billing"))
+        return redirect(url_for("billing"))
+
+    @app.route("/billing/invoice/<int:inv_id>/pay", methods=["POST"])
+    @login_required
+    def billing_invoice_pay(inv_id: int):
+        tid = get_current_tenant_id()
+        db = get_db()
+        invoice = db.execute(
+            "SELECT * FROM billing_invoices WHERE id=? AND tenant_id=?", (inv_id, tid)
+        ).fetchone()
+        if not invoice:
+            flash("الفاتورة غير موجودة", "danger")
+            return redirect(url_for("billing"))
+        amount = request.form.get("amount", str(invoice["amount"])).strip()
+        method = request.form.get("method", "card").strip()
+        reference = request.form.get("reference", "").strip()
+        pay_date = request.form.get("pay_date", datetime.now().strftime("%Y-%m-%d")).strip()
+        try:
+            amount_f = float(amount)
+        except ValueError:
+            amount_f = float(invoice["amount"])
+        db.execute(
+            """INSERT INTO billing_payments(tenant_id, invoice_id, amount, method, reference, pay_date)
+               VALUES (?,?,?,?,?,?)""",
+            (tid, inv_id, amount_f, method, reference, pay_date),
+        )
+        db.execute(
+            "UPDATE billing_invoices SET status='paid', paid_at=? WHERE id=? AND tenant_id=?",
+            (datetime.now().strftime("%Y-%m-%d %H:%M:%S"), inv_id, tid),
+        )
+        db.commit()
+        log_action("فوترة", f"تسجيل دفع فاتورة #{inv_id} بمبلغ {amount_f} ر.س")
+        # Push success notification
+        try:
+            push_notification(
+                db, tid, "success",
+                f"تم سداد الفاتورة {invoice['invoice_no']} — {amount_f} ر.س",
+                f"طريقة الدفع: {method}",
+                "billing_invoices", inv_id,
+            )
+        except Exception:
+            pass
+        flash(f"تم تسجيل دفعة {amount_f} ر.س للفاتورة {invoice['invoice_no']}.", "success")
+        return redirect(url_for("billing"))
+
+    @app.route("/billing/invoice/<int:inv_id>/delete", methods=["POST"])
+    @login_required
+    def billing_invoice_delete(inv_id: int):
+        tid = get_current_tenant_id()
+        db = get_db()
+        db.execute("DELETE FROM billing_invoices WHERE id=? AND tenant_id=?", (inv_id, tid))
+        db.execute("DELETE FROM billing_payments WHERE invoice_id=? AND tenant_id=?", (inv_id, tid))
+        db.commit()
+        log_action("فوترة", f"حذف فاتورة #{inv_id}")
+        flash("تم حذف الفاتورة.", "success")
+        return redirect(url_for("billing"))
 
     @app.route("/about")
     @login_required
