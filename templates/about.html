@@ -1,33 +1,40 @@
-{% extends "base.html" %}
+{% extends 'base.html' %}
+{% set block_icon = 'fas fa-info-circle' %}
+{% block title %}حول النظام{% endblock %}
+{% block page_title %}حول النظام{% endblock %}
+{% block breadcrumb %}حول{% endblock %}
+
 {% block content %}
-<section class="about-page">
-  <div class="about-hero card-base glass-panel">
-    <div class="about-logo-wrap">
-      <img src="{{ url_for('brand_logo') }}" alt="{{ system_name or 'شعار النظام' }}" class="about-logo">
+<div class="card" style="max-width:520px;margin:2rem auto;text-align:center;">
+    <div class="card-body" style="padding:2.5rem 1.75rem;">
+        <div style="font-size:1.35rem;font-weight:800;margin-bottom:1.25rem;color:var(--accent);line-height:1.6;">
+            النظام المحاسبي الذكي ERP
+        </div>
+        <div style="font-size:0.95rem;line-height:2.1;color:var(--text);">
+            <div>برمجة : <strong>محمد ناصر عبدالله</strong></div>
+            <div>شركة : <strong>System Makers</strong></div>
+            <div>نظام : <strong>{{ settings.get('program_label', 'System Erp 2026') }}</strong></div>
+        </div>
+        <div style="display:flex;flex-wrap:wrap;gap:12px;justify-content:center;margin-top:2rem;">
+            <a href="https://wa.me/201103763082" target="_blank" rel="noopener noreferrer" class="btn btn-success">
+                <i class="fab fa-whatsapp"></i> تواصل واتساب
+            </a>
+            <a href="https://www.facebook.com/profile.php?id=100095476066188" target="_blank" rel="noopener noreferrer" class="btn btn-info">
+                <i class="fab fa-facebook-f"></i> صفحة فيسبوك
+            </a>
+        </div>
+
+        <div style="margin-top:22px;padding-top:18px;border-top:1px solid var(--border);">
+            <div style="font-weight:800;margin-bottom:10px;color:var(--text);">الثيمات</div>
+            <div style="display:flex;flex-wrap:wrap;gap:10px;justify-content:center;">
+                <button type="button" class="btn btn-primary btn-sm" onclick="erpSetTheme('fiori')"><i class="fas fa-building"></i> SAP Fiori</button>
+                <button type="button" class="btn btn-outline btn-sm" onclick="erpSetTheme('light')"><i class="fas fa-sun"></i> فاتح</button>
+                <button type="button" class="btn btn-outline btn-sm" onclick="erpSetTheme('dark')"><i class="fas fa-moon"></i> داكن</button>
+            </div>
+            <div style="margin-top:10px;font-size:12px;color:var(--text-muted);line-height:1.8;">
+                يتم حفظ اختيار الثيم على هذا الجهاز تلقائياً.
+            </div>
+        </div>
     </div>
-    <h1 class="about-makers-title">System Makers</h1>
-    <p class="about-dev-credit">برمجة / محمد ناصر عبدالله</p>
-    <p class="about-tagline">{{ system_name or "نظام إدارة مكتب المحاماة" }}</p>
-    <p class="about-desc">
-      منصة متكاملة لإدارة مكتب المحاماة: القضايا، العملاء، الجلسات، المستندات، العقود، المهام،
-      المدفوعات والمصروفات، مع عزل بيانات لكل شركة وتنبيهات ذكية ولوحة تحكم حديثة.
-    </p>
-    <div class="about-actions">
-      <a class="about-btn about-btn-wa" href="https://wa.me/201103763082" target="_blank" rel="noopener noreferrer">
-        <span class="about-btn-icon">💬</span>
-        <span>
-          <span class="about-btn-label">واتساب للدعم والتحديثات</span>
-          <span class="about-btn-sub">01103763082</span>
-        </span>
-      </a>
-      <a class="about-btn about-btn-fb" href="https://www.facebook.com/profile.php?id=100095476066188" target="_blank" rel="noopener noreferrer">
-        <span class="about-btn-icon">📘</span>
-        <span>
-          <span class="about-btn-label">صفحة النظام على فيسبوك</span>
-          <span class="about-btn-sub">زيارة الصفحة</span>
-        </span>
-      </a>
-    </div>
-  </div>
-</section>
+</div>
 {% endblock %}
